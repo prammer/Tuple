@@ -1,5 +1,5 @@
 
-use Test::Most;
+use Test::Most tests => 1, 'die';
 use Test::TempDir qw(scratch);
 
 my $tmp = scratch();
@@ -21,4 +21,6 @@ $depot->db_conn->run(sub { $_->do(q{
         c text
     );
 })});;
+
+ok( -f $tmp->file('db'));
 
