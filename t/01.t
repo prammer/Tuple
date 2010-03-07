@@ -1,8 +1,8 @@
 
 use Test::Most tests => 1, 'die';
-use Test::TempDir qw(scratch);
+use Test::TempDir;
 
-my $tmp = scratch();
+my $tmp = temp_root();
 my $dsn = 'dbi:SQLite:dbname=' . $tmp->file('db');
 
 
@@ -20,7 +20,8 @@ $depot->db_conn->run(sub { $_->do(q{
         b text,
         c text
     );
-})});;
+})});
 
 ok( -f $tmp->file('db'));
+
 
