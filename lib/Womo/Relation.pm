@@ -70,6 +70,8 @@ sub rename {
     );
 }
 
+# TODO: instead of only taking a CodeRef, also take some
+# kind of SQL::Abstract expression
 sub restriction {
     my $self = shift;
     my $expr = shift;
