@@ -93,6 +93,8 @@ validate_sr_class({
 # This is trying to use the running example data from
 # "Database in Depth" by C. J. Date.
 
+use Set::Relation::V2;
+sub relation { return Set::Relation::V2->new( @_ ); }
 
 sub validate_sr_class {
 
