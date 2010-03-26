@@ -58,7 +58,6 @@ has '_sql' => (
         my $r    = $self->relation;
         my $expr = $r->_expr;
         if ($expr) {
-            die;
             my ( $inner, $oper, @args ) = @$expr;
             local $_ = $inner;
             return $to_sql->{$oper}->(@args);
@@ -80,9 +79,9 @@ sub _new_sth {
     my $self = shift;
 
     #TODO: uses private method
-    my $db_conn = $self->relation->_depot->db_conn;
     my $sql     = $self->_sql;
-    print "\n$sql\n";
+#    print "\n$sql\n";
+    my $db_conn = $self->relation->_depot->db_conn;
     my $sth = $db_conn->run( sub { $_->prepare($sql); } );
     $sth->execute or die;
     return $sth;
