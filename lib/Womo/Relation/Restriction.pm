@@ -5,13 +5,6 @@ use Womo::Relation::Iterator::CodeRef;
 
 with 'Womo::Relation::Derived';
 
-has '_parent' => (
-    init_arg => 'parent',
-    is       => 'ro',
-    does     => 'Womo::Relation::Role',
-    required => 1,
-);
-
 has '_expression' => (
     init_arg => 'expression',
     is => 'ro',
