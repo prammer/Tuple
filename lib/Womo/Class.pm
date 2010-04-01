@@ -14,6 +14,7 @@ sub import {
     my $class  = shift;
     my $caller = caller();
 
+
     eval qq{
         package $caller;
         use Moose;
@@ -22,9 +23,10 @@ sub import {
     };
     die $@ if $@;
 
+    warnings->import( FATAL => 'all' );
+    strict->import;
 #    $class->$import();
 
-    warnings->import( FATAL => 'all' );
     namespace::autoclean->import( -cleanee => $caller, );
 
     # TODO: make_immutable
