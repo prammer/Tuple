@@ -1,7 +1,7 @@
 
 package Womo::Depot::Interface;
 
-use Moose::Role;
+use Womo::Role;
 
 requires qw(catalog database);
 

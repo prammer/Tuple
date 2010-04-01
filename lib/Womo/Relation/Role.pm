@@ -1,6 +1,6 @@
 
 package Womo::Relation::Role;
-use Moose::Role;
+use Womo::Role;
 use Set::Relation::V2;
 require Womo::Relation::Iterator;
 
