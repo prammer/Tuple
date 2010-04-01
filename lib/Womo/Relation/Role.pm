@@ -2,7 +2,6 @@
 package Womo::Relation::Role;
 use Womo::Role;
 use Set::Relation::V2;
-require Womo::Relation::Iterator::STH;
 
 has '_heading' => (
     init_arg => 'heading',
@@ -69,7 +68,6 @@ sub rename {
 sub restriction {
     my $self = shift;
     my $expr = shift;
-    require Womo::Relation::Restriction;
 
     return Womo::Relation::Restriction->new(
         parent     => $self,
@@ -142,6 +140,10 @@ sub cardinality {
 }
 
 with 'Set::Relation';
+
+# timing issues
+require Womo::Relation::Iterator::STH;
+require Womo::Relation::Restriction;
 
 1;
 __END__
