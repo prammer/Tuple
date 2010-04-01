@@ -3,7 +3,7 @@ package Womo::Depot::DBI;
 
 use Womo::Class;
 use Set::Relation::V2;
-use Womo::Relation;
+use Womo::Relation::Table;
 
 # TODO: the structure of this is very SQL specific
 # "table_name, column_name" vs "relvar_name, attribute_name" etc
@@ -55,7 +55,7 @@ sub _build_database {
     my $db = {};
     for my $t ( @{ $c->body } ) {
         my $columns = $t->{columns}->attr('column_name');
-        $db->{ $t->{table_name} } = Womo::Relation->new(
+        $db->{ $t->{table_name} } = Womo::Relation::Table->new(
             depot      => $self,
             heading    => $columns,
             table_name => $t->{table_name},

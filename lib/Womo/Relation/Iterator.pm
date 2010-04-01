@@ -2,13 +2,13 @@
 package Womo::Relation::Iterator;
 
 use Womo::Class;
-require Womo::Relation;
+use Womo::Relation::Role;
 
 with 'MooseX::Iterator::Role';
 
 has 'relation' => (
     is       => 'ro',
-    isa      => 'Womo::Relation',
+    does     => 'Womo::Relation::Role',
     required => 1,
 );
 

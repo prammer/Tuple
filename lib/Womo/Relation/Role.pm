@@ -1,27 +1,8 @@
 
-package Womo::Relation;
-use Womo::Class;
-use Womo::Depot::Interface;
+package Womo::Relation::Role;
+use Moose::Role;
 use Set::Relation::V2;
 require Womo::Relation::Iterator;
-require Womo::Relation::Operator;
-
-has '_depot' => (
-    init_arg => 'depot',
-    is       => 'ro',
-    does     => 'Womo::Depot::Interface',
-);
-
-has '_table_name' => (
-    init_arg => 'table_name',
-    is       => 'ro',
-    isa      => 'Str',
-);
-
-has '_expr' => (
-    is  => 'ro',
-    isa => 'Womo::Relation::Operator',
-);
 
 has '_heading' => (
     init_arg => 'heading',
@@ -30,63 +11,10 @@ has '_heading' => (
     required => 1,
 );
 
-# TODO: make sure we have depot+table_name or expr ??
-
 sub _new_iterator {
     my $self = shift;
 
     return Womo::Relation::Iterator->new( relation => $self, sth => $self->_new_sth, );
-}
-
-sub _new_operator {
-    my $self = shift;
-    return Womo::Relation::Operator->new( @_, relation => $self, );
-}
-
-{
-    my $to_sql = {
-        'projection' => sub {
-            my @attributes = @_;
-            return
-                  "select distinct "
-                . join( ", ", @attributes )
-                . " from ("
-                . $_->_build_sql . ")",
-                ;
-        },
-        'rename' => sub {
-            my %map = @_;
-
-            # meh! this is repeated from sub rename above
-            my %old_map;
-            my @old_attr = @{ $_->_heading };
-            @old_map{@old_attr} = @old_attr;
-            my %new_map = ( %old_map, %map );
-
-            my $clause = join( ', ',
-                map { "$_ $new_map{$_}" } sort keys %new_map );
-            return "select $clause from ( " . $_->_build_sql . ')';
-        },
-        'restriction' => sub {
-            my $expr = shift;
-            return $_->_build_sql . " where " . $expr;
-        },
-    };
-
-    sub _build_sql {
-        my $self = shift;
-
-        my $r    = $self;
-        my $expr = $r->_expr;
-        if ($expr) {
-            my ( $inner, $oper, $args ) = map { $expr->$_ } qw(relation name args);
-            local $_ = $inner;
-            return $to_sql->{$oper}->(@$args);
-        }
-        my $table = $r->_table_name or die 'must have table_name';
-        my $col   = $r->_heading    or die 'must have heading';
-        return 'select distinct ' . join( ', ', @$col ) . " from $table";
-    }
 }
 
 sub _new_sth {
