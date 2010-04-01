@@ -2,7 +2,7 @@
 package Womo::Relation::Role;
 use Womo::Role;
 use Set::Relation::V2;
-require Womo::Relation::Iterator;
+require Womo::Relation::Iterator::STH;
 
 has '_heading' => (
     init_arg => 'heading',
@@ -14,7 +14,7 @@ has '_heading' => (
 sub _new_iterator {
     my $self = shift;
 
-    return Womo::Relation::Iterator->new( relation => $self, sth => $self->_new_sth, );
+    return Womo::Relation::Iterator::STH->new( relation => $self, sth => $self->_new_sth, );
 }
 
 sub _new_sth {
@@ -69,12 +69,12 @@ sub rename {
 sub restriction {
     my $self = shift;
     my $expr = shift;
-    return ( blessed $self)->new(
-        _expr => $self->_new_operator(
-            name => 'restriction',
-            args => [$expr],
-        ),
-        heading => [ @{ $self->_heading } ],
+    require Womo::Relation::Restriction;
+
+    return Womo::Relation::Restriction->new(
+        parent     => $self,
+        expression => $expr,
+        heading    => [ @{ $self->_heading } ],
     );
 }
 
