@@ -15,7 +15,7 @@ has '_parent' => (
 has '_expression' => (
     init_arg => 'expression',
     is => 'ro',
-#TODO:
+#TODO: DBIx::Class::SQLAHacks
 #    isa => 'Str|CodeRef',
     required => 1,
 );
