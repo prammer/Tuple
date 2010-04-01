@@ -90,45 +90,51 @@ sub is_identical {
         Set::Relation::V2->new( $other->members ) );
 }
 
+sub cardinality {
+    my $self = shift;
+
+    # TODO: select count(*) ... ??
+    return $self->_as_v2->cardinality;
+}
+
 # TODO: to satisfy Set::Relation
 {
     my $meta   = __PACKAGE__->meta;
     my @method = (
-        'antijoin',               'attr',
-        'attr_names',             'body',
-        'cardinality',            'cardinality_per_group',
-        'classification',         'cmpl_group',
-        'cmpl_proj',              'cmpl_restr',
-        'cmpl_wrap',              'composition',
-        'count',                  'count_per_group',
-        'degree',                 'deletion',
-        'diff',                   'empty',
-        'exclusion',              'export_for_new',
-        'extension',              'group',
-        'has_attrs',              'has_key',
-        'has_member',             'heading',
-        'insertion',              'intersection',
-        'is_disjoint',            'is_empty',
-        'is_nullary',             'is_proper_subset',
-        'is_proper_superset',     'is_subset',
-        'is_superset',            'join',
-        'join_with_group',        'keys',
-        'limit',                  'limit_by_attr_names',
-        'map',                    'outer_join_with_exten',
-        'outer_join_with_group',  'outer_join_with_static_exten',
-        'outer_join_with_undefs', 'product',
-        'quotient',               'rank',
-        'rank_by_attr_names',     'restr_and_cmpl',
-        'semidiff',               'semijoin',
-        'semijoin_and_diff',      'slice',
-        'static_exten',           'static_subst',
-        'static_subst_in_restr',  'static_subst_in_semijoin',
-        'subst_in_restr',         'subst_in_semijoin',
-        'substitution',           'summary',
-        'symmetric_diff',         'tclose',
-        'ungroup',                'union',
-        'unwrap',                 'which',
-        'wrap'
+        'antijoin',                     'attr',
+        'attr_names',                   'body',
+        'cardinality_per_group',        'classification',
+        'cmpl_group',                   'cmpl_proj',
+        'cmpl_restr',                   'cmpl_wrap',
+        'composition',                  'count',
+        'count_per_group',              'degree',
+        'deletion',                     'diff',
+        'empty',                        'exclusion',
+        'export_for_new',               'extension',
+        'group',                        'has_attrs',
+        'has_key',                      'has_member',
+        'heading',                      'insertion',
+        'intersection',                 'is_disjoint',
+        'is_empty',                     'is_nullary',
+        'is_proper_subset',             'is_proper_superset',
+        'is_subset',                    'is_superset',
+        'join',                         'join_with_group',
+        'keys',                         'limit',
+        'limit_by_attr_names',          'map',
+        'outer_join_with_exten',        'outer_join_with_group',
+        'outer_join_with_static_exten', 'outer_join_with_undefs',
+        'product',                      'quotient',
+        'rank',                         'rank_by_attr_names',
+        'restr_and_cmpl',               'semidiff',
+        'semijoin',                     'semijoin_and_diff',
+        'slice',                        'static_exten',
+        'static_subst',                 'static_subst_in_restr',
+        'static_subst_in_semijoin',     'subst_in_restr',
+        'subst_in_semijoin',            'substitution',
+        'summary',                      'symmetric_diff',
+        'tclose',                       'ungroup',
+        'union',                        'unwrap',
+        'which',                        'wrap'
     );
     for my $method (@method) {
         $meta->add_method( $method => sub { die 'not implemented yet' } );
