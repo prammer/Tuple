@@ -3,6 +3,8 @@ package Womo::Relation::Role;
 use Womo::Role;
 use Set::Relation::V2;
 
+requires '_db_conn';
+
 has '_heading' => (
     init_arg => 'heading',
     is       => 'ro',
@@ -21,7 +23,7 @@ sub _new_sth {
 
     my $sql     = $self->_build_sql;
 #    print "\n$sql\n";
-    my $db_conn = $self->_depot->db_conn;
+    my $db_conn = $self->_db_conn;
     my $sth = $db_conn->run( sub { $_->prepare($sql); } );
     $sth->execute or die;
     return $sth;
@@ -40,13 +42,12 @@ sub members {
 
 sub projection {
     my $self       = shift;
-    my @attributes = @_;
-    return ( blessed $self)->new(
-        _expr => $self->_new_operator(
-            name => 'projection',
-            args => \@attributes,
-        ),
-        heading => [@attributes],
+    my $attributes = [@_];
+
+    return Womo::Relation::Projection->new(
+        parent     => $self,
+        attributes => $attributes,
+        heading    => $attributes,
     );
 }
 
@@ -144,6 +145,7 @@ with 'Set::Relation';
 # timing issues
 require Womo::Relation::Iterator::STH;
 require Womo::Relation::Restriction;
+require Womo::Relation::Projection;
 
 1;
 __END__

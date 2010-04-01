@@ -15,6 +15,11 @@ sub _build_sql {
     die;
 }
 
+sub _db_conn {
+    my $self = shift;
+    return $self->_parent->_db_conn;
+}
+
 1;
 __END__
 

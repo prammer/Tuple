@@ -27,6 +27,11 @@ sub _build_sql {
     return 'select distinct ' . join( ', ', @$col ) . " from $table";
 }
 
+sub _db_conn {
+    my $self = shift;
+    return $self->_depot->db_conn;
+}
+
 1;
 __END__
 
