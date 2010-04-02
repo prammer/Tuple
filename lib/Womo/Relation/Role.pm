@@ -137,8 +137,9 @@ sub union {
     return $self if ( @_ == 0 );
     my $others = $self->_array_arg_ensure_same_headings(@_);
 
-    return $self->_reduce_op( $others, 'union',
-        'Womo::Relation::Union' );
+    return $self->_reduce_op( $others, 'union', 'Womo::Relation::Union',
+        [ @{ $self->heading } ],
+    );
 }
 
 sub intersection {
@@ -146,16 +147,26 @@ sub intersection {
 
     confess 'TODO: infinite relation?' if ( @_ == 0 );
     my $others = $self->_array_arg_ensure_same_headings(@_);
-    return $self->_reduce_op( $others, 'intersection',
-        'Womo::Relation::Intersection' );
+    return $self->_reduce_op(
+        $others, 'intersection',
+        'Womo::Relation::Intersection',
+        [ @{ $self->heading } ],
+    );
 }
 
 sub join {
-die;
+    my $self = shift;
+
+    my $others = $self->_array_arg(@_);
+    return $self if ( @$others == 0 );
+    my $heading = set( map { @{ $_->heading } } ( $self, @$others ) );
+    return $self->_reduce_op( $others, 'join', 'Womo::Relation::Join',
+        [ sort $heading->members ],
+    );
 }
 
 sub _reduce_op {
-    my ( $self, $others, $op_method, $op_class ) = @_;
+    my ( $self, $others, $op_method, $op_class, $heading ) = @_;
 
     # TODO: deal better with $others not doing Womo::Relation::Role (ie not SQL backed)
     my ( @does, @not );
@@ -178,7 +189,7 @@ sub _reduce_op {
         return $op_class->new(
             parent  => $self,
             other   => $others->[0],
-            heading => [ @{ $self->heading } ],
+            heading => $heading,
         );
     }
     my $one = shift @$others;
@@ -265,6 +276,7 @@ require Womo::Relation::Projection;
 require Womo::Relation::Rename;
 require Womo::Relation::Union;
 require Womo::Relation::Intersection;
+require Womo::Relation::Join;
 
 1;
 __END__
