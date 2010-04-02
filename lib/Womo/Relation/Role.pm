@@ -3,6 +3,7 @@ package Womo::Relation::Role;
 use Womo::Role;
 use Set::Relation::V2;
 use Set::Object qw(set);
+use Moose::Util qw(does_role);
 
 requires '_db_conn';
 
@@ -119,7 +120,9 @@ sub cardinality {
 sub union {
     my $self = shift;
 
-# TODO: deal with is_empty
+    # TODO: deal with is_empty
+
+    return $self if ( @_ == 0 );
     my $others
         = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'ARRAY' )
         ? shift
@@ -132,6 +135,23 @@ sub union {
         }
     }
 
+    # TODO: deal better with $others not doing Womo::Relation::Role (ie not SQL backed)
+    my (@does, @not);
+    for my $r (@$others) {
+        if (does_role($r, 'Womo::Relation::Role')) {
+            push @does, $r;
+        }
+        else {
+            push @not, $r;
+        }
+    }
+
+    if ( @not != 0 ) {
+        my $one = shift @not;
+        return ( @not ? $one->union(@not) : $one )
+            ->union( $self->union(@does) );
+    }
+
     if ( @$others == 1 ) {
         return Womo::Relation::Union->new(
             parent  => $self,
@@ -141,6 +161,19 @@ sub union {
     }
     my $one = shift @$others;
     return $self->union($one)->union($others);
+}
+
+sub insertion {
+    my $self = shift;
+
+    # TODO: make this lazy?
+    return $self->_as_v2->insertion(@_);
+}
+
+# TODO: meh, ->new on what?
+sub export_for_new {
+    my $self = shift;
+    return $self->_as_v2->export_for_new(@_);
 }
 
 # TODO: to satisfy Set::Relation
@@ -156,10 +189,9 @@ sub union {
         'count_per_group',        'degree',
         'deletion',               'diff',
         'empty',                  'exclusion',
-        'export_for_new',         'extension',
-        'group',                  'has_attrs',
-        'has_key',                'has_member',
-        'insertion',              'intersection',
+        'extension',              'group',
+        'has_attrs',              'has_key',
+        'has_member',             'intersection',
         'is_disjoint',            'is_empty',
         'is_nullary',             'is_proper_subset',
         'is_proper_superset',     'is_subset',
@@ -182,7 +214,8 @@ sub union {
         'which',                  'wrap'
     );
     for my $method (@method) {
-        $meta->add_method( $method => sub { die 'not implemented yet' } );
+        $meta->add_method(
+            $method => sub { die "$method not implemented yet" } );
     }
 }
 
