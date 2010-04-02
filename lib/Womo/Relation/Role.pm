@@ -76,7 +76,7 @@ sub rename {
     my $rename = set( values %$map );
     my $broke  = $orig->intersection($new)->difference($rename);
     if ( $broke->size > 0 ) {
-        my $members = join( ', ', $broke->members );
+        my $members = Core::join( ', ', $broke->members );
         confess "renaming to existing unrenamed attribute(s): $members";
     }
 
@@ -124,8 +124,8 @@ sub _ensure_same_headings {
     my $h2 = set( @{ $_[1]->heading } );
     if ( !$h1->equal($h2) ) {
         confess "headings differ:\n["
-            . join( ',', @{ $_[0]->heading } ) . "]\n["
-            . join( ',', @{ $_[1]->heading } ) . ']';
+            . Core::join( ',', @{ $_[0]->heading } ) . "]\n["
+            . Core::join( ',', @{ $_[1]->heading } ) . ']';
     }
 }
 
@@ -137,32 +137,8 @@ sub union {
     return $self if ( @_ == 0 );
     my $others = $self->_array_arg_ensure_same_headings(@_);
 
-# TODO: deal better with $others not doing Womo::Relation::Role (ie not SQL backed)
-    my ( @does, @not );
-    for my $r (@$others) {
-        if ( does_role( $r, 'Womo::Relation::Role' ) ) {
-            push @does, $r;
-        }
-        else {
-            push @not, $r;
-        }
-    }
-
-    if ( @not != 0 ) {
-        my $one = shift @not;
-        return ( @not ? $one->union(@not) : $one )
-            ->union( $self->union(@does) );
-    }
-
-    if ( @$others == 1 ) {
-        return Womo::Relation::Union->new(
-            parent  => $self,
-            other   => $others->[0],
-            heading => [ @{ $self->heading } ],
-        );
-    }
-    my $one = shift @$others;
-    return $self->union($one)->union($others);
+    return $self->_reduce_op( $others, 'union',
+        'Womo::Relation::Union' );
 }
 
 sub intersection {
@@ -172,6 +148,10 @@ sub intersection {
     my $others = $self->_array_arg_ensure_same_headings(@_);
     return $self->_reduce_op( $others, 'intersection',
         'Womo::Relation::Intersection' );
+}
+
+sub join {
+die;
 }
 
 sub _reduce_op {
@@ -238,38 +218,37 @@ sub export_for_new {
 {
     my $meta   = __PACKAGE__->meta;
     my @method = (
-        'antijoin',                     'attr',
-        'attr_names',                   'body',
-        'cardinality_per_group',        'classification',
-        'cmpl_group',                   'cmpl_proj',
-        'cmpl_restr',                   'cmpl_wrap',
-        'composition',                  'count',
-        'count_per_group',              'degree',
-        'deletion',                     'diff',
-        'empty',                        'exclusion',
-        'extension',                    'group',
-        'has_attrs',                    'has_key',
-        'has_member',                   'is_disjoint',
-        'is_empty',                     'is_nullary',
-        'is_proper_subset',             'is_proper_superset',
-        'is_subset',                    'is_superset',
-        'join',                         'join_with_group',
-        'keys',                         'limit',
-        'limit_by_attr_names',          'map',
-        'outer_join_with_exten',        'outer_join_with_group',
-        'outer_join_with_static_exten', 'outer_join_with_undefs',
-        'product',                      'quotient',
-        'rank',                         'rank_by_attr_names',
-        'restr_and_cmpl',               'semidiff',
-        'semijoin',                     'semijoin_and_diff',
-        'slice',                        'static_exten',
-        'static_subst',                 'static_subst_in_restr',
-        'static_subst_in_semijoin',     'subst_in_restr',
-        'subst_in_semijoin',            'substitution',
-        'summary',                      'symmetric_diff',
-        'tclose',                       'ungroup',
-        'unwrap',                       'which',
-        'wrap'
+        'antijoin',               'attr',
+        'attr_names',             'body',
+        'cardinality_per_group',  'classification',
+        'cmpl_group',             'cmpl_proj',
+        'cmpl_restr',             'cmpl_wrap',
+        'composition',            'count',
+        'count_per_group',        'degree',
+        'deletion',               'diff',
+        'empty',                  'exclusion',
+        'extension',              'group',
+        'has_attrs',              'has_key',
+        'has_member',             'is_disjoint',
+        'is_empty',               'is_nullary',
+        'is_proper_subset',       'is_proper_superset',
+        'is_subset',              'is_superset',
+        'join_with_group',        'keys',
+        'limit',                  'limit_by_attr_names',
+        'map',                    'outer_join_with_exten',
+        'outer_join_with_group',  'outer_join_with_static_exten',
+        'outer_join_with_undefs', 'product',
+        'quotient',               'rank',
+        'rank_by_attr_names',     'restr_and_cmpl',
+        'semidiff',               'semijoin',
+        'semijoin_and_diff',      'slice',
+        'static_exten',           'static_subst',
+        'static_subst_in_restr',  'static_subst_in_semijoin',
+        'subst_in_restr',         'subst_in_semijoin',
+        'substitution',           'summary',
+        'symmetric_diff',         'tclose',
+        'ungroup',                'unwrap',
+        'which',                  'wrap'
     );
     for my $method (@method) {
         $meta->add_method(
