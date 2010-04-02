@@ -206,7 +206,7 @@ my @shipment_tuples =
             [ qw(S5  Adams 30     Athens) ],
         ],
     ]);
-    ok( $expect->is_identical($s1), 'expected renamed relation' );
+    ok( $s1->is_identical($expect), 'expected renamed relation' );
     cmp_bag( $s1->members, $expect->members, 'same members' );
 }
 

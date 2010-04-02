@@ -2,6 +2,7 @@
 package Womo::Relation::Role;
 use Womo::Role;
 use Set::Relation::V2;
+use Set::Object qw(set);
 
 requires '_db_conn';
 
@@ -51,21 +52,39 @@ sub projection {
     );
 }
 
-sub rename {
+sub _components {
     my $self = shift;
-    my %map  = @_;
-    my %old_map;
-    my @old_attr = @{ $self->_heading };
-    @old_map{@old_attr} = @old_attr;
-    my %new_map = ( %old_map, %map );
-    return ( blessed $self)->new(
-        _expr => $self->_new_operator( name => 'rename', args => [%map], ),
-        heading => [ sort values %new_map ],
+    return { map { $_ => 1 } @{ $self->_heading } };
+}
+
+sub rename {
+    my ( $self, $map ) = @_;
+
+    my $comp = $self->_components;
+    for my $attr ( values %$map ) {
+        confess "'$attr' is not an attribute of this relation"
+            if ( !$comp->{$attr} );
+    }
+
+    # check for values %$map in keys %$comp but not in keys %$map
+    my $orig   = set( keys %$comp );
+    my $new    = set( keys %$map );
+    my $rename = set( values %$map );
+    my $broke  = $orig->intersection($new)->difference($rename);
+    if ( $broke->size > 0 ) {
+        my $members = join( ', ', $broke->members );
+        confess "renaming to existing unrenamed attribute(s): $members";
+    }
+
+    return Womo::Relation::Rename->new(
+        parent  => $self,
+        map     => {%$map},
+        heading => [ sort $new->members ],
     );
 }
 
 # TODO: instead of only taking a CodeRef, also take some
-# kind of SQL::Abstract expression
+# kind of SQL::Abstract expression (DBIx::Class::SQLAHacks)
 sub restriction {
     my $self = shift;
     my $expr = shift;
@@ -146,6 +165,7 @@ with 'Set::Relation';
 require Womo::Relation::Iterator::STH;
 require Womo::Relation::Restriction;
 require Womo::Relation::Projection;
+require Womo::Relation::Rename;
 
 1;
 __END__
