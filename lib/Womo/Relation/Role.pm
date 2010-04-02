@@ -44,7 +44,9 @@ sub members {
 
 sub projection {
     my $self       = shift;
-    my $attributes = [@_];
+
+    # TODO: validate args?
+    my $attributes = $self->_array_arg(@_);
 
     return Womo::Relation::Projection->new(
         parent     => $self,
@@ -117,28 +119,28 @@ sub cardinality {
     return $self->_as_v2->cardinality;
 }
 
+sub _ensure_same_headings {
+    my $h1 = set( @{ $_[0]->heading } );
+    my $h2 = set( @{ $_[1]->heading } );
+    if ( !$h1->equal($h2) ) {
+        confess "headings differ:\n["
+            . join( ',', @{ $_[0]->heading } ) . "]\n["
+            . join( ',', @{ $_[1]->heading } ) . ']';
+    }
+}
+
 sub union {
     my $self = shift;
 
     # TODO: deal with is_empty
 
     return $self if ( @_ == 0 );
-    my $others
-        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'ARRAY' )
-        ? shift
-        : [@_];
-    my $h = set( @{ $self->heading } );
-    for my $o (@$others) {
-        my $oh = set( @{ $o->heading } );
-        if ( !$h->equal($oh) ) {
-            confess 'headings differ';    # TODO better message
-        }
-    }
+    my $others = $self->_array_arg_ensure_same_headings(@_);
 
-    # TODO: deal better with $others not doing Womo::Relation::Role (ie not SQL backed)
-    my (@does, @not);
+# TODO: deal better with $others not doing Womo::Relation::Role (ie not SQL backed)
+    my ( @does, @not );
     for my $r (@$others) {
-        if (does_role($r, 'Womo::Relation::Role')) {
+        if ( does_role( $r, 'Womo::Relation::Role' ) ) {
             push @does, $r;
         }
         else {
@@ -163,6 +165,62 @@ sub union {
     return $self->union($one)->union($others);
 }
 
+sub intersection {
+    my $self = shift;
+
+    confess 'TODO: infinite relation?' if ( @_ == 0 );
+    my $others = $self->_array_arg_ensure_same_headings(@_);
+    return $self->_reduce_op( $others, 'intersection',
+        'Womo::Relation::Intersection' );
+}
+
+sub _reduce_op {
+    my ( $self, $others, $op_method, $op_class ) = @_;
+
+    # TODO: deal better with $others not doing Womo::Relation::Role (ie not SQL backed)
+    my ( @does, @not );
+    for my $r (@$others) {
+        if ( does_role( $r, 'Womo::Relation::Role' ) ) {
+            push @does, $r;
+        }
+        else {
+            push @not, $r;
+        }
+    }
+
+    if ( @not != 0 ) {
+        my $one = shift @not;
+        return ( @not ? $one->$op_method(@not) : $one )
+            ->$op_method( ( @does ? $self->$op_method(@does) : $self ) );
+    }
+
+    if ( @$others == 1 ) {
+        return $op_class->new(
+            parent  => $self,
+            other   => $others->[0],
+            heading => [ @{ $self->heading } ],
+        );
+    }
+    my $one = shift @$others;
+    return $self->$op_method($one)->$op_method($others);
+}
+
+sub _array_arg {
+    my $self = shift;
+    my $arg
+        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'ARRAY' )
+        ? shift
+        : [@_];
+    return $arg;
+}
+
+sub _array_arg_ensure_same_headings {
+    my $self   = shift;
+    my $others = $self->_array_arg(@_);
+    $self->_ensure_same_headings($_) for (@$others);
+    return $others;
+}
+
 sub insertion {
     my $self = shift;
 
@@ -180,38 +238,38 @@ sub export_for_new {
 {
     my $meta   = __PACKAGE__->meta;
     my @method = (
-        'antijoin',               'attr',
-        'attr_names',             'body',
-        'cardinality_per_group',  'classification',
-        'cmpl_group',             'cmpl_proj',
-        'cmpl_restr',             'cmpl_wrap',
-        'composition',            'count',
-        'count_per_group',        'degree',
-        'deletion',               'diff',
-        'empty',                  'exclusion',
-        'extension',              'group',
-        'has_attrs',              'has_key',
-        'has_member',             'intersection',
-        'is_disjoint',            'is_empty',
-        'is_nullary',             'is_proper_subset',
-        'is_proper_superset',     'is_subset',
-        'is_superset',            'join',
-        'join_with_group',        'keys',
-        'limit',                  'limit_by_attr_names',
-        'map',                    'outer_join_with_exten',
-        'outer_join_with_group',  'outer_join_with_static_exten',
-        'outer_join_with_undefs', 'product',
-        'quotient',               'rank',
-        'rank_by_attr_names',     'restr_and_cmpl',
-        'semidiff',               'semijoin',
-        'semijoin_and_diff',      'slice',
-        'static_exten',           'static_subst',
-        'static_subst_in_restr',  'static_subst_in_semijoin',
-        'subst_in_restr',         'subst_in_semijoin',
-        'substitution',           'summary',
-        'symmetric_diff',         'tclose',
-        'ungroup',                'unwrap',
-        'which',                  'wrap'
+        'antijoin',                     'attr',
+        'attr_names',                   'body',
+        'cardinality_per_group',        'classification',
+        'cmpl_group',                   'cmpl_proj',
+        'cmpl_restr',                   'cmpl_wrap',
+        'composition',                  'count',
+        'count_per_group',              'degree',
+        'deletion',                     'diff',
+        'empty',                        'exclusion',
+        'extension',                    'group',
+        'has_attrs',                    'has_key',
+        'has_member',                   'is_disjoint',
+        'is_empty',                     'is_nullary',
+        'is_proper_subset',             'is_proper_superset',
+        'is_subset',                    'is_superset',
+        'join',                         'join_with_group',
+        'keys',                         'limit',
+        'limit_by_attr_names',          'map',
+        'outer_join_with_exten',        'outer_join_with_group',
+        'outer_join_with_static_exten', 'outer_join_with_undefs',
+        'product',                      'quotient',
+        'rank',                         'rank_by_attr_names',
+        'restr_and_cmpl',               'semidiff',
+        'semijoin',                     'semijoin_and_diff',
+        'slice',                        'static_exten',
+        'static_subst',                 'static_subst_in_restr',
+        'static_subst_in_semijoin',     'subst_in_restr',
+        'subst_in_semijoin',            'substitution',
+        'summary',                      'symmetric_diff',
+        'tclose',                       'ungroup',
+        'unwrap',                       'which',
+        'wrap'
     );
     for my $method (@method) {
         $meta->add_method(
@@ -227,6 +285,7 @@ require Womo::Relation::Restriction;
 require Womo::Relation::Projection;
 require Womo::Relation::Rename;
 require Womo::Relation::Union;
+require Womo::Relation::Intersection;
 
 1;
 __END__

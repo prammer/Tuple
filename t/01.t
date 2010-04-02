@@ -3,8 +3,8 @@ use utf8;
 use warnings FATAL => 'all';
 use strict;
 use Test::Most tests => 1, 'die';
-use Test::Deep;
 use Test::Moose;
+use List::AllUtils;
 
 my $tmp = './t/db';
 unlink $tmp;
@@ -80,6 +80,14 @@ $db_conn->run( sub {
 
 });
 
+#sub in {
+#    my $attr  = shift;
+#    my @items = @_;
+#    return sub {
+#        my $value = $_->{$attr};
+#        return List::AllUtils::any { $value eq $_ } @items;
+#    };
+#}
 
 #my $depot = Womo::Depot->new( database => ..., catalog => ...);
 use Womo::Depot::DBI;
@@ -246,11 +254,16 @@ my @shipment_tuples =
         city   => 'Paris',
     };
     my $s1 = $s->intersection(
-        relation( [ @supplier_tuples[ 0, 4 ], $another ] )
-    );
+        relation( [ @supplier_tuples[ 0, 4 ], $another ] ) );
     my $expect = relation( [ @supplier_tuples[ 0, 4 ] ] );
     ok( $s1->is_identical($expect), 'intersection' );
     cmp_bag( $s1->members, $expect->members, 'same members' );
+
+    my $s2  = $s->projection('sno');
+    my $sp1 = $sp->projection('sno');
+    my $r   = $s2->intersection($sp1);
+    $expect = relation( [ map { { 'sno' => $_ } } qw(S1 S2 S3 S4) ] );
+    ok( $r->is_identical($expect), 'intersection' );
 }
 
 # join
