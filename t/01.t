@@ -213,6 +213,7 @@ my @shipment_tuples =
 # union
 {
     diag('union');
+    ok( $s->is_identical( $s->union($s) ), 'self union yield self' );
     my $s1 = relation( [ @supplier_tuples[ 0, 1, 2 ] ] );
     my $s2 = relation( [ @supplier_tuples[ 1, 2, 3, 4 ] ] );
     my $s3 = $s1->union($s2);

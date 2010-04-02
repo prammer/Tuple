@@ -23,7 +23,7 @@ sub _build_sql {
     my $self = shift;
 
     my $table = $self->_table_name;
-    my $col   = $self->_heading;
+    my $col   = $self->heading;
     return 'select distinct ' . join( ', ', @$col ) . " from $table";
 }
 

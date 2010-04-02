@@ -6,8 +6,8 @@ use Set::Object qw(set);
 
 requires '_db_conn';
 
-has '_heading' => (
-    init_arg => 'heading',
+sub heading; # FIXME
+has 'heading' => (
     is       => 'ro',
     isa      => 'ArrayRef[Str]',
     required => 1,
@@ -23,7 +23,7 @@ sub _new_sth {
     my $self = shift;
 
     my $sql     = $self->_build_sql;
-#    print "\n$sql\n";
+    print "\n$sql\n";
     my $db_conn = $self->_db_conn;
     my $sth = $db_conn->run( sub { $_->prepare($sql); } );
     $sth->execute or die;
@@ -54,7 +54,7 @@ sub projection {
 
 sub _components {
     my $self = shift;
-    return { map { $_ => 1 } @{ $self->_heading } };
+    return { map { $_ => 1 } @{ $self->heading } };
 }
 
 # TODO: the keys and values seem reversed, but this is how Set::Relation works
@@ -93,7 +93,7 @@ sub restriction {
     return Womo::Relation::Restriction->new(
         parent     => $self,
         expression => $expr,
-        heading    => [ @{ $self->_heading } ],
+        heading    => [ @{ $self->heading } ],
     );
 }
 
@@ -116,44 +116,70 @@ sub cardinality {
     return $self->_as_v2->cardinality;
 }
 
+sub union {
+    my $self = shift;
+
+# TODO: deal with is_empty
+    my $others
+        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'ARRAY' )
+        ? shift
+        : [@_];
+    my $h = set( @{ $self->heading } );
+    for my $o (@$others) {
+        my $oh = set( @{ $o->heading } );
+        if ( !$h->equal($oh) ) {
+            confess 'headings differ';    # TODO better message
+        }
+    }
+
+    if ( @$others == 1 ) {
+        return Womo::Relation::Union->new(
+            parent  => $self,
+            other   => $others->[0],
+            heading => [ @{ $self->heading } ],
+        );
+    }
+    my $one = shift @$others;
+    return $self->union($one)->union($others);
+}
+
 # TODO: to satisfy Set::Relation
 {
     my $meta   = __PACKAGE__->meta;
     my @method = (
-        'antijoin',                     'attr',
-        'attr_names',                   'body',
-        'cardinality_per_group',        'classification',
-        'cmpl_group',                   'cmpl_proj',
-        'cmpl_restr',                   'cmpl_wrap',
-        'composition',                  'count',
-        'count_per_group',              'degree',
-        'deletion',                     'diff',
-        'empty',                        'exclusion',
-        'export_for_new',               'extension',
-        'group',                        'has_attrs',
-        'has_key',                      'has_member',
-        'heading',                      'insertion',
-        'intersection',                 'is_disjoint',
-        'is_empty',                     'is_nullary',
-        'is_proper_subset',             'is_proper_superset',
-        'is_subset',                    'is_superset',
-        'join',                         'join_with_group',
-        'keys',                         'limit',
-        'limit_by_attr_names',          'map',
-        'outer_join_with_exten',        'outer_join_with_group',
-        'outer_join_with_static_exten', 'outer_join_with_undefs',
-        'product',                      'quotient',
-        'rank',                         'rank_by_attr_names',
-        'restr_and_cmpl',               'semidiff',
-        'semijoin',                     'semijoin_and_diff',
-        'slice',                        'static_exten',
-        'static_subst',                 'static_subst_in_restr',
-        'static_subst_in_semijoin',     'subst_in_restr',
-        'subst_in_semijoin',            'substitution',
-        'summary',                      'symmetric_diff',
-        'tclose',                       'ungroup',
-        'union',                        'unwrap',
-        'which',                        'wrap'
+        'antijoin',               'attr',
+        'attr_names',             'body',
+        'cardinality_per_group',  'classification',
+        'cmpl_group',             'cmpl_proj',
+        'cmpl_restr',             'cmpl_wrap',
+        'composition',            'count',
+        'count_per_group',        'degree',
+        'deletion',               'diff',
+        'empty',                  'exclusion',
+        'export_for_new',         'extension',
+        'group',                  'has_attrs',
+        'has_key',                'has_member',
+        'insertion',              'intersection',
+        'is_disjoint',            'is_empty',
+        'is_nullary',             'is_proper_subset',
+        'is_proper_superset',     'is_subset',
+        'is_superset',            'join',
+        'join_with_group',        'keys',
+        'limit',                  'limit_by_attr_names',
+        'map',                    'outer_join_with_exten',
+        'outer_join_with_group',  'outer_join_with_static_exten',
+        'outer_join_with_undefs', 'product',
+        'quotient',               'rank',
+        'rank_by_attr_names',     'restr_and_cmpl',
+        'semidiff',               'semijoin',
+        'semijoin_and_diff',      'slice',
+        'static_exten',           'static_subst',
+        'static_subst_in_restr',  'static_subst_in_semijoin',
+        'subst_in_restr',         'subst_in_semijoin',
+        'substitution',           'summary',
+        'symmetric_diff',         'tclose',
+        'ungroup',                'unwrap',
+        'which',                  'wrap'
     );
     for my $method (@method) {
         $meta->add_method( $method => sub { die 'not implemented yet' } );
@@ -167,6 +193,7 @@ require Womo::Relation::Iterator::STH;
 require Womo::Relation::Restriction;
 require Womo::Relation::Projection;
 require Womo::Relation::Rename;
+require Womo::Relation::Union;
 
 1;
 __END__
