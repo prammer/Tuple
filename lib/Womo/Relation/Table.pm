@@ -22,6 +22,7 @@ has '_table_name' => (
 sub _build_sql {
     my $self = shift;
 
+    # TODO: if heading includes any key, leave off distinct
     my $table = $self->_table_name;
     my $col   = $self->heading;
     return 'select distinct ' . join( ', ', @$col ) . " from $table";
