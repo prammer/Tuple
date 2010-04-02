@@ -37,11 +37,16 @@ sub _build_sql {
         . join( ', ', map {"$l2.$_"} $d2->members );
     my $a  = '( ' . $r1->_build_sql . " ) $l1";
     my $b  = '( ' . $r2->_build_sql . " ) $l2";
-    my $on = join( 'and ', map {"$l1.$_ = $l2.$_"} $common->members );
+    my $on = '';
+    if ( $common->size > 0 ) {
+        $on = 'on '
+            . join( 'and ', map {"$l1.$_ = $l2.$_"} $common->members );
+    }
+
 
     #    select ... from (...) a join (...) b on a.x = b.x, ...
 
-    return "$select from\n$a\njoin\n$b\non $on";
+    return "$select from\n$a\njoin\n$b\n$on";
 }
 
 1;
