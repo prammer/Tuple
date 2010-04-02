@@ -57,6 +57,7 @@ sub _components {
     return { map { $_ => 1 } @{ $self->_heading } };
 }
 
+# TODO: the keys and values seem reversed, but this is how Set::Relation works
 sub rename {
     my ( $self, $map ) = @_;
 
