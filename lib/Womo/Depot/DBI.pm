@@ -57,7 +57,7 @@ sub _build_database {
         my $columns = $t->{columns}->attr('column_name');
         $db->{ $t->{table_name} } = Womo::Relation::Table->new(
             depot      => $self,
-            heading    => $columns,
+            heading    => [ sort @$columns ],
             table_name => $t->{table_name},
         );
     }
