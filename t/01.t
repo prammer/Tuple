@@ -20,9 +20,7 @@ use Womo::Test qw(new_test_depot);
 my $depot = new_test_depot('./t/db');
 isa_ok( $depot, 'Womo::Depot::DBI' );
 
-validate_sr_class({
-    map { $_ => $depot->database->{$_} } qw(suppliers parts shipments)
-});
+validate_sr_class( $depot->database );
 
 # This is trying to use the running example data from
 # "Database in Depth" by C. J. Date.
