@@ -3,6 +3,8 @@ package Womo::Class;
 
 use warnings FATAL => 'all';
 use strict;
+use utf8;
+use namespace::autoclean;
 
 #use Moose::Exporter;
 

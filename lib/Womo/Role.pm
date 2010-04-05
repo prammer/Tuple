@@ -3,6 +3,8 @@ package Womo::Role;
 
 use warnings FATAL => 'all';
 use strict;
+use utf8;
+use namespace::autoclean;
 
 sub import {
     my $class  = shift;
