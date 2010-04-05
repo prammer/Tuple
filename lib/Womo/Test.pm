@@ -4,7 +4,7 @@ use utf8;
 use warnings FATAL => 'all';
 use strict;
 use DBIx::Connector;
-use Sub::Exporter -setup => { exports => [qw(new_test_db)] };
+use Sub::Exporter -setup => { exports => [qw(new_test_db new_test_depot)] };
 
 #END { unlink $tmp }
 
@@ -97,6 +97,15 @@ sub new_test_db {
     );
 
     return $db_conn;
+}
+
+sub new_test_depot {
+    my $db_conn = new_test_db(@_);
+
+    use Womo::Depot::DBI;
+    my $depot
+        = Womo::Depot::DBI->new( db_conn => $db_conn, db_dsn => 'foo' );    # fix db_dsn required
+    return $depot;
 }
 
 1;

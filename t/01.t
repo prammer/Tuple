@@ -5,9 +5,7 @@ use strict;
 use Test::Most tests => 1, 'die';
 use Test::Moose;
 
-use Womo::Test qw(new_test_db);
-
-my $db_conn = new_test_db( './t/db' );
+use Womo::Test qw(new_test_depot);
 
 #sub in {
 #    my $attr  = shift;
@@ -19,8 +17,7 @@ my $db_conn = new_test_db( './t/db' );
 #}
 
 #my $depot = Womo::Depot->new( database => ..., catalog => ...);
-use Womo::Depot::DBI;
-my $depot = Womo::Depot::DBI->new( db_conn => $db_conn, db_dsn => 'foo' ); # fix db_dsn required
+my $depot = new_test_depot('./t/db');
 isa_ok( $depot, 'Womo::Depot::DBI' );
 
 validate_sr_class({
