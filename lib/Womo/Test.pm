@@ -16,6 +16,9 @@ sub new_test_db {
 
     my $db_conn = DBIx::Connector->new( $dsn, '', '' );
 
+    # This is trying to use the running example data from
+    # "Database in Depth" by C. J. Date.
+
     my $sql = q{
 
         create table suppliers (
