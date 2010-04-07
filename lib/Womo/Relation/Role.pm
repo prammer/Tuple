@@ -6,6 +6,7 @@ use Set::Object qw(set);
 use Moose::Util qw(does_role);
 
 requires '_db_conn';
+requires '_build_sql';
 
 sub heading; # FIXME
 has 'heading' => (
@@ -23,11 +24,11 @@ sub _new_iterator {
 sub _new_sth {
     my $self = shift;
 
-    my $sql     = $self->_build_sql;
+    my ($sql, @bind) = $self->_build_sql;
     print "\n$sql\n";
     my $db_conn = $self->_db_conn;
     my $sth = $db_conn->run( sub { $_->prepare($sql); } );
-    $sth->execute or die;
+    $sth->execute(@bind) or die;
     return $sth;
 }
 
@@ -91,7 +92,7 @@ sub rename {
 # kind of SQL::Abstract expression (DBIx::Class::SQLAHacks)
 sub restriction {
     my $self = shift;
-    my $expr = shift;
+    my $expr = @_ == 1 ? shift : { @_ };
 
     return Womo::Relation::Restriction->new(
         parent     => $self,

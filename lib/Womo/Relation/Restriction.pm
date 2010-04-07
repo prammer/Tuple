@@ -2,6 +2,7 @@
 package Womo::Relation::Restriction;
 use Womo::Class;
 use Womo::Relation::Iterator::CodeRef;
+use SQL::Abstract;
 
 with 'Womo::Relation::Derived';
 
@@ -9,7 +10,7 @@ has '_expression' => (
     init_arg => 'expression',
     is => 'ro',
 #TODO: DBIx::Class::SQLAHacks
-#    isa => 'Str|CodeRef',
+    isa => 'HashRef|CodeRef',
     required => 1,
 );
 
@@ -34,7 +35,17 @@ around '_new_iterator' => sub {
 };
 
 sub _build_sql {
-    die;
+    my $self = shift;
+
+    my $sql = SQL::Abstract->new;
+    my ( $stmt, @bind ) = $sql->where( $self->_expression );
+
+    $stmt
+        = "select distinct * from (\n"
+        . $self->_parent->_build_sql
+        . "\n)\n$stmt";
+
+    return ( $stmt, @bind );
 }
 
 1;
