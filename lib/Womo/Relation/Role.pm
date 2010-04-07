@@ -19,7 +19,7 @@ sub _new_iterator {
     my $self = shift;
 
     return Womo::Relation::Iterator::STH->new(
-        relation => $self,
+#        relation => $self,
         sth      => $self->_new_sth,
     );
 }

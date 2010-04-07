@@ -17,11 +17,11 @@ has '_expression' => (
 around '_new_iterator' => sub {
     my $next = shift;
     my $self = shift;
-    my $want    = $self->_expression;
+    my $want = $self->_expression;
     if ( ref $want && ref($want) eq 'CODE' ) {
         my $parent_it = $self->_parent->_new_iterator;
         return Womo::Relation::Iterator::CodeRef->new(
-            relation => $self,
+#            relation => $self,
             code     => sub {
                 while (1) {
                     my $next = $parent_it->next or return;
