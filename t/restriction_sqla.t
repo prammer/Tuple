@@ -3,7 +3,7 @@
 use utf8;
 use warnings FATAL => 'all';
 use strict;
-use Test::Most tests => 5, 'die';
+use Test::Most tests => 7, 'die';
 use Test::Moose;
 
 use Womo::Test qw(new_test_depot);
@@ -34,7 +34,8 @@ ok( $s2->is_identical($expect), 'restriction' );
 cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
 cmp_bag( $s1->members, $expect->members, 'same members' );
 
-my $jr = $s->join($sp)->restriction(sno => 'S4');
+my $out1 = $s->join($sp)->restriction(sno => 'S4');
+my $out2 = $s->restriction(sno => 'S4')->join($sp);
 
 $expect = relation( [
         [ qw(sno sname status city   pno qty) ], [
@@ -44,10 +45,27 @@ $expect = relation( [
     ],
 ] );
 
-ok( $jr->is_identical($expect), 'join + restriction' );
+ok( $out1->is_identical($expect), 'join + restriction' );
+
+# TODO: optimize this (somehow?) to not even query since they are the same logically?
+ok( $out1->is_identical($out2),   'restriction + join' );
+
+#my $out1 = $s->join($p, $sp)->
+
+
 
 __END__
 
+
+$db->{suppliers} = relation( [
+        [ qw(sno sname status city  ) ], [
+        [ qw(S1  Smith 20     London) ],
+        [ qw(S2  Jones 10     Paris ) ],
+        [ qw(S3  Blake 30     Paris ) ],
+        [ qw(S4  Clark 20     London) ],
+        [ qw(S5  Adams 30     Athens) ],
+    ],
+] );
 
 
 $db->{parts} = relation( [
