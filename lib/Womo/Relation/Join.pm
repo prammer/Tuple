@@ -30,23 +30,26 @@ sub _build_sql {
     my $d2     = $h2->difference($h1);
     my $l1     = 'a';
     my $l2     = 'b';
+    my ( $r1_sql, @r1_bind ) = $r1->_build_sql;
+    my ( $r2_sql, @r2_bind ) = $r2->_build_sql;
 
     my $select
         = "select "
-        . join( ', ', ( map {"$l1.$_"} $d1->union($common)->members ), '' )
-        . join( ', ', map {"$l2.$_"} $d2->members );
-    my $a  = '( ' . $r1->_build_sql . " ) $l1";
-    my $b  = '( ' . $r2->_build_sql . " ) $l2";
+        . join( ', ', ( map { "$l1.$_" } $d1->union($common)->members ),
+        '' )
+        . join( ', ', map { "$l2.$_" } $d2->members );
+    my $a  = '( ' . $r1_sql . " ) $l1";
+    my $b  = '( ' . $r2_sql . " ) $l2";
     my $on = '';
     if ( $common->size > 0 ) {
         $on = 'on '
-            . join( 'and ', map {"$l1.$_ = $l2.$_"} $common->members );
+            . join( 'and ', map { "$l1.$_ = $l2.$_" } $common->members );
     }
 
 
     #    select ... from (...) a join (...) b on a.x = b.x, ...
 
-    return "$select from\n$a\njoin\n$b\n$on";
+    return ( "$select from\n$a\njoin\n$b\n$on", @r1_bind, @r2_bind );
 }
 
 1;

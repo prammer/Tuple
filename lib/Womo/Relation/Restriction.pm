@@ -39,13 +39,12 @@ sub _build_sql {
 
     my $sql = SQL::Abstract->new;
     my ( $stmt, @bind ) = $sql->where( $self->_expression );
+    my ( $pstmt, @pbind ) = $self->_parent->_build_sql;
 
     $stmt
-        = "select distinct * from (\n"
-        . $self->_parent->_build_sql
-        . "\n)\n$stmt";
+        = "select distinct * from (\n" . $pstmt . "\n)\n$stmt";
 
-    return ( $stmt, @bind );
+    return ( $stmt, @pbind, @bind );
 }
 
 1;
