@@ -26,16 +26,56 @@ my @supplier_tuples =
     sort { $a->{sno} cmp $b->{sno} }
     @{ $s->members };
 
-# restriction
-{
-    diag('restriction');
-    my $s1 = $s->restriction( sno => 'S1' );
-    my $s2 = $s->restriction( { sno => 'S1' } );
-    my $expect = relation( [ $supplier_tuples[0] ] );
-    ok( $s1->is_identical($expect), 'restriction' );
-    ok( $s2->is_identical($expect), 'restriction' );
-    cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
-    cmp_bag( $s1->members, $expect->members, 'same members' );
-}
+my $s1 = $s->restriction( sno => 'S1' );
+my $s2 = $s->restriction( { sno => 'S1' } );
+my $expect = relation( [ $supplier_tuples[0] ] );
+ok( $s1->is_identical($expect), 'restriction' );
+ok( $s2->is_identical($expect), 'restriction' );
+cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
+cmp_bag( $s1->members, $expect->members, 'same members' );
+
+my $jr = $s->join($sp)->restriction(sno => 'S4');
+
+$expect = relation( [
+        [ qw(sno sname status city   pno qty) ], [
+        [ qw(S4  Clark 20     London P2  200) ],
+        [ qw(S4  Clark 20     London P4  300) ],
+        [ qw(S4  Clark 20     London P5  400) ],
+    ],
+] );
+
+ok( $jr->is_identical($expect), 'join + restriction' );
+
+__END__
+
+
+
+$db->{parts} = relation( [
+        [ qw(pno pname color weight city  ) ], [
+        [ qw(P1  Nut   Red   12.0   London) ],
+        [ qw(P2  Bolt  Green 17.0   Paris ) ],
+        [ qw(P3  Screw Blue  17.0   Oslo  ) ],
+        [ qw(P4  Screw Red   14.0   London) ],
+        [ qw(P5  Cam   Blue  12.0   Paris ) ],
+        [ qw(P6  Cog   Red   19.0   London) ],
+    ],
+] );
+
+$db->{shipments} = relation( [
+        [ qw(sno pno qty) ], [
+        [ qw(S1  P1  300) ],
+        [ qw(S1  P2  200) ],
+        [ qw(S1  P3  400) ],
+        [ qw(S1  P4  200) ],
+        [ qw(S1  P5  100) ],
+        [ qw(S1  P6  100) ],
+        [ qw(S2  P1  300) ],
+        [ qw(S2  P2  400) ],
+        [ qw(S3  P2  200) ],
+        [ qw(S4  P2  200) ],
+        [ qw(S4  P4  300) ],
+        [ qw(S4  P5  400) ],
+    ],
+] );
 
 
