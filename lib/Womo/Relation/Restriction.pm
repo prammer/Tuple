@@ -35,16 +35,19 @@ around '_new_iterator' => sub {
 };
 
 sub _build_sql {
-    my $self = shift;
+    my ( $self, $next_label ) = @_;
 
     my $sql = SQL::Abstract->new;
     my ( $stmt, @bind ) = $sql->where( $self->_expression );
-    my ( $pstmt, @pbind ) = $self->_parent->_build_sql;
+    my $p_sql = $self->_parent->_build_sql($next_label);
 
-    $stmt
-        = "select distinct * from (\n" . $pstmt . "\n)\n$stmt";
-
-    return ( $stmt, @pbind, @bind );
+    return $self->_new_sql(
+        'text' => "select distinct * from (\n"
+            . $p_sql->text
+            . "\n)\n$stmt",
+        'bind'       => [ @{ $p_sql->bind }, @bind ],
+        'next_label' => $p_sql->next_label,
+    );
 }
 
 1;

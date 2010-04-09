@@ -12,14 +12,18 @@ has '_attributes' => (
 );
 
 sub _build_sql {
-    my $self = shift;
+    my ( $self, $next_label ) = @_;
 
-    return
-          "select distinct "
-        . join( ", ", @{ $self->_attributes } )
-        . " from ("
-        . $self->_parent->_build_sql . ")",
-        ;
+    my $p_sql = $self->_parent->_build_sql($next_label);
+
+    return $self->_new_sql(
+        'text' => "select distinct "
+            . join( ", ", @{ $self->_attributes } )
+            . " from ("
+            . $p_sql->text . ")",
+        'bind'       => $p_sql->bind,
+        'next_label' => $p_sql->next_label,
+    );
 }
 
 1;

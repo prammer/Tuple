@@ -4,6 +4,8 @@ use Womo::Role;
 use Set::Relation::V2;
 use Set::Object qw(set);
 use Moose::Util qw(does_role);
+use Womo::SQL;
+
 
 requires '_db_conn';
 requires '_build_sql';
@@ -14,6 +16,11 @@ has 'heading' => (
     isa      => 'ArrayRef[Str]',
     required => 1,
 );
+
+sub _new_sql {
+    my $self = shift;
+    return Womo::SQL->new(@_);
+}
 
 sub _new_iterator {
     my $self = shift;
@@ -27,11 +34,16 @@ sub _new_iterator {
 sub _new_sth {
     my $self = shift;
 
-    my ($sql, @bind) = $self->_build_sql;
-    print "\n$sql\n";
+    my $sql = $self->_build_sql('a');
+    print "-------------\n" . $sql->text . "\n";
     my $db_conn = $self->_db_conn;
-    my $sth = $db_conn->run( sub { $_->prepare($sql); } );
-    $sth->execute(@bind) or die;
+    print join( ', ', map { "'$_'" } @{ $sql->bind } ) . "\n";
+    print "---------------\n";
+    my $sth = $db_conn->run( sub {
+        my $sth = $_->prepare( $sql->text );
+        $sth->execute( @{ $sql->bind } ) or die $sth->errstr;
+        return $sth;
+    });
     return $sth;
 }
 
@@ -66,7 +78,8 @@ sub _components {
 
 # TODO: the keys and values seem reversed, but this is how Set::Relation works
 sub rename {
-    my ( $self, $map ) = @_;
+    my $self = shift;
+    my $map  = $self->_hash_arg(@_);
 
     my $comp = $self->_components;
     for my $attr ( values %$map ) {
@@ -85,9 +98,10 @@ sub rename {
     }
 
     return Womo::Relation::Rename->new(
-        parent  => $self,
-        map     => {%$map},
-        heading => [ sort $new->members ],
+        parent => $self,
+        map    => {%$map},
+        heading =>
+            [ sort $orig->difference($rename)->union($new)->members ],
     );
 }
 
@@ -198,6 +212,15 @@ sub _reduce_op {
     }
     my $one = shift @$others;
     return $self->$op_method($one)->$op_method($others);
+}
+
+sub _hash_arg {
+    my $self = shift;
+    my $arg
+        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'HASH' )
+        ? shift
+        : {@_};
+    return $arg;
 }
 
 sub _array_arg {

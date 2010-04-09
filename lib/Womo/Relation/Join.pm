@@ -14,7 +14,7 @@ has '_other' => (
 );
 
 sub _build_sql {
-    my $self = shift;
+    my ( $self, $next_label ) = @_;
 
     my $r1 = $self->_parent;
     my $r2 = $self->_other;
@@ -28,28 +28,31 @@ sub _build_sql {
     my $common = $h1->intersection($h2);
     my $d1     = $h1->difference($h2);
     my $d2     = $h2->difference($h1);
-    my $l1     = 'a';
-    my $l2     = 'b';
-    my ( $r1_sql, @r1_bind ) = $r1->_build_sql;
-    my ( $r2_sql, @r2_bind ) = $r2->_build_sql;
+    my $r1_sql = $r1->_build_sql($next_label);
+    my $r2_sql = $r2->_build_sql( $r1_sql->next_label );
+    $next_label = $r2_sql->next_label;
+    my $l1 = $next_label++;
+    my $l2 = $next_label++;
 
     my $select
         = "select "
-        . join( ', ', ( map { "$l1.$_" } $d1->union($common)->members ),
+        . join( ', ', ( map { "$l1.$_ $_" } sort $d1->union($common)->members ),
         '' )
-        . join( ', ', map { "$l2.$_" } $d2->members );
-    my $a  = '( ' . $r1_sql . " ) $l1";
-    my $b  = '( ' . $r2_sql . " ) $l2";
+        . join( ', ', map { "$l2.$_ $_" } sort $d2->members );
+    my $a  = '( ' . $r1_sql->text . " ) $l1";
+    my $b  = '( ' . $r2_sql->text . " ) $l2";
     my $on = '';
     if ( $common->size > 0 ) {
-        $on = 'on '
-            . join( 'and ', map { "$l1.$_ = $l2.$_" } $common->members );
+        $on = 'on ('
+            . join( ' and ', map { "$l1.$_ = $l2.$_" } sort $common->members ) . ')';
     }
 
-
     #    select ... from (...) a join (...) b on a.x = b.x, ...
-
-    return ( "$select from\n$a\njoin\n$b\n$on", @r1_bind, @r2_bind );
+    return $self->_new_sql(
+        'text'       => "$select from\n$a\njoin\n$b\n$on",
+        'bind'       => $r1_sql->combine_bind($r2_sql),
+        'next_label' => $next_label,
+    );
 }
 
 1;
