@@ -40,7 +40,7 @@ sub _new_sth {
     print join( ', ', map { "'$_'" } @{ $sql->bind } ) . "\n";
     print "---------------\n";
     my $sth = $db_conn->run( sub {
-        my $sth = $_->prepare( $sql->text );
+        my $sth = $_->prepare( $sql->text ) or die $_->errstr;
         $sth->execute( @{ $sql->bind } ) or die $sth->errstr;
         return $sth;
     });
