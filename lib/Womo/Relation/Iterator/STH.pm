@@ -16,7 +16,7 @@ has '_sth' => (
 sub next {
     my $self = shift;
 
-    my $sth = $self->_sth;
+    my $sth = $self->_sth or return;
     if ( $sth->{Active} and my $row = $sth->fetchrow_hashref() ) {
         return $row;
     }
