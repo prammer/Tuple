@@ -10,13 +10,19 @@ has '_sth' => (
     is       => 'ro',
 #    isa => ???
     required => 1,
+    clearer => '_clear_sth',
 );
 
 sub next {
     my $self = shift;
 
-    my $row = $self->_sth->fetchrow_hashref;
-    return $row;
+    my $sth = $self->_sth;
+    if ( $sth->{Active} and my $row = $sth->fetchrow_hashref() ) {
+        return $row;
+    }
+    $sth->finish;
+    $self->_clear_sth;
+    return;
 }
 
 sub has_next {
