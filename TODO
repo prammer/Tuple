@@ -1,0 +1,6 @@
+
+- left outer join
+- group by
+- functions: sum(), count(), max(), etc...
+- deal with nulls
+
