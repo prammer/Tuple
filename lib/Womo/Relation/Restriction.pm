@@ -42,9 +42,8 @@ sub _build_sql {
     my $p_sql = $self->_parent->_build_sql($next_label);
 
     return $self->_new_sql(
-        'text' => "select distinct * from (\n"
-            . $p_sql->text
-            . "\n)\n$stmt",
+        'lines' =>
+            [ 'select distinct * from (', $p_sql, ')', $stmt, ],
         'bind'       => [ @{ $p_sql->bind }, @bind ],
         'next_label' => $p_sql->next_label,
     );

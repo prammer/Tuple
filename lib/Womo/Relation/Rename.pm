@@ -22,7 +22,7 @@ sub _build_sql {
         ( map { "$map->{$_} $_" } sort keys %$map ) );
     my $p_sql = $self->_parent->_build_sql($next_label);
     return $self->_new_sql(
-        'text'       => "select $clause from ( " . $p_sql->text . ')',
+        'lines'      => [ "select $clause from (", $p_sql, ')', ],
         'bind'       => $p_sql->bind,
         'next_label' => $p_sql->next_label,
     );

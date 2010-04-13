@@ -18,7 +18,7 @@ sub _build_sql {
     my $p_sql = $self->_parent->_build_sql($next_label);
     my $o_sql = $self->_other->_build_sql( $p_sql->next_label );
     return $self->_new_sql(
-        'text' => join( ' ', $p_sql->text, 'union', $o_sql->text ),
+        'lines'      => [ $p_sql, 'union', $o_sql, ],
         'bind'       => $p_sql->combine_bind($o_sql),
         'next_label' => $o_sql->next_label,
     );

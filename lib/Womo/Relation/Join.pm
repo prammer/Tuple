@@ -39,17 +39,29 @@ sub _build_sql {
         . join( ', ', ( map { "$l1.$_ $_" } sort $d1->union($common)->members ),
         '' )
         . join( ', ', map { "$l2.$_ $_" } sort $d2->members );
-    my $a  = '( ' . $r1_sql->text . " ) $l1";
-    my $b  = '( ' . $r2_sql->text . " ) $l2";
-    my $on = '';
+    my @on = ();
     if ( $common->size > 0 ) {
-        $on = 'on ('
-            . join( ' and ', map { "$l1.$_ = $l2.$_" } sort $common->members ) . ')';
+        @on = (
+            'on ('
+                . join( ' and ',
+                map { "$l1.$_ = $l2.$_" } sort $common->members )
+                . ')'
+        );
     }
 
+#    my $a  = '( ' . $r1_sql->text . " ) $l1";
+#    my $b  = '( ' . $r2_sql->text . " ) $l2";
     #    select ... from (...) a join (...) b on a.x = b.x, ...
     return $self->_new_sql(
-        'text'       => "$select from\n$a\njoin\n$b\n$on",
+        'lines' => [
+            $select, 'from', '(',
+                $r1_sql,
+            ") $l1",
+            'join', '(',
+                $r2_sql,
+            ") $l2",
+            @on,
+        ],
         'bind'       => $r1_sql->combine_bind($r2_sql),
         'next_label' => $next_label,
     );

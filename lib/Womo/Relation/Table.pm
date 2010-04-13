@@ -28,9 +28,8 @@ sub _build_sql {
     my $table = $self->_table_name;
     my $col   = $self->heading;
     return $self->_new_sql(
-        'text' => 'select distinct '
-            . join( ', ', @$col )
-            . " from $table",
+        'lines' =>
+            [ 'select distinct ' . join( ', ', @$col ) . " from $table" ],
         'bind'       => [],
         'next_label' => $next_label,
     );

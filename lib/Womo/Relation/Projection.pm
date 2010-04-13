@@ -17,10 +17,10 @@ sub _build_sql {
     my $p_sql = $self->_parent->_build_sql($next_label);
 
     return $self->_new_sql(
-        'text' => "select distinct "
-            . join( ", ", @{ $self->_attributes } )
-            . " from ("
-            . $p_sql->text . ")",
+        'lines' => [
+            "select distinct " . join( ", ", @{ $self->_attributes } ),
+            'from (', $p_sql, ')'
+        ],
         'bind'       => $p_sql->bind,
         'next_label' => $p_sql->next_label,
     );
