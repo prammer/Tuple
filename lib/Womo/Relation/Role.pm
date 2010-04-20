@@ -5,17 +5,37 @@ use Set::Relation::V2;
 use Set::Object qw(set);
 use Moose::Util qw(does_role);
 use Womo::SQL;
+use Womo::Depot::Interface;
 
+#requires '_build_sql';
 
-requires '_db_conn';
-requires '_build_sql';
-
-sub heading; # FIXME
+sub heading;    # FIXME
 has 'heading' => (
     is       => 'ro',
     isa      => 'ArrayRef[Str]',
     required => 1,
+    lazy     => 1,
+    default  => sub {
+        my $self = shift;
+        return $self->_ast->{'heading'};
+    },
 );
+
+has '_ast' => (
+    init_arg => 'ast',
+    is       => 'ro',
+    isa      => 'HashRef',
+    required => 1,
+);
+
+has '_depot' => (
+    init_arg => 'depot',
+    is       => 'ro',
+    does     => 'Womo::Depot::Interface',
+    required => 1,
+#    handles  => { '_db_conn' => 'db_conn' },
+);
+
 
 sub _new_sql {
     my $self = shift;
@@ -24,6 +44,7 @@ sub _new_sql {
 
 sub _new_iterator {
     my $self = shift;
+    return $self->_depot->new_iterator( $self->_ast );
 
     return Womo::Relation::Iterator::STH->new(
 #        relation => $self,
@@ -33,6 +54,7 @@ sub _new_iterator {
 
 sub _new_sth {
     my $self = shift;
+    return $self->_depot->new_sth( $self->_ast );
 
     my $sql = $self->_build_sql('a');
     print "-------------\n" . $sql->text . "\n";
@@ -58,16 +80,33 @@ sub members {
     return \@all;
 }
 
+sub _new_relation {
+    my $self = shift;
+    return $self->meta->name->new(@_);
+}
+
 sub projection {
-    my $self       = shift;
+    my $self = shift;
 
-    # TODO: validate args?
     my $attributes = $self->_array_arg(@_);
+    {
+        my $a     = set(@$attributes);
+        my $h     = set( @{ $self->heading } );
+        my $broke = $a->difference($h);
+        if ( $broke->size > 0 ) {
+            my $members = Core::join( ', ', $broke->members );
+            confess "not attribute(s) of this relation: $members";
+        }
+    }
 
-    return Womo::Relation::Projection->new(
-        parent     => $self,
-        attributes => $attributes,
-        heading    => $attributes,
+    return $self->_new_relation(
+        'ast' => {
+            'type'    => 'operator',
+            'op'      => 'projection',
+            'args'    => [ $self->_ast, $attributes, ],
+            'heading' => $attributes,
+        },
+        'depot' => $self->_depot,
     );
 }
 
@@ -97,11 +136,15 @@ sub rename {
         confess "renaming to existing unrenamed attribute(s): $members";
     }
 
-    return Womo::Relation::Rename->new(
-        parent => $self,
-        map    => {%$map},
-        heading =>
-            [ sort $orig->difference($rename)->union($new)->members ],
+    return $self->_new_relation(
+        'ast' => {
+            'type' => 'operator',
+            'op'   => 'rename',
+            'args' => [ $self->_ast, {%$map}, ],
+            'heading' =>
+                [ sort $orig->difference($rename)->union($new)->members ],
+        },
+        'depot' => $self->_depot,
     );
 }
 
@@ -109,12 +152,16 @@ sub rename {
 # kind of SQL::Abstract expression (DBIx::Class::SQLAHacks)
 sub restriction {
     my $self = shift;
-    my $expr = @_ == 1 ? shift : { @_ };
+    my $expr = @_ == 1 ? shift : {@_};
 
-    return Womo::Relation::Restriction->new(
-        parent     => $self,
-        expression => $expr,
-        heading    => [ @{ $self->heading } ],
+    return $self->_new_relation(
+        'ast' => {
+            'type'    => 'operator',
+            'op'      => 'restriction',
+            'args'    => [ $self->_ast, $expr, ],
+            'heading' => [ @{ $self->heading } ],
+        },
+        'depot' => $self->_depot,
     );
 }
 
@@ -155,9 +202,7 @@ sub union {
     return $self if ( @_ == 0 );
     my $others = $self->_array_arg_ensure_same_headings(@_);
 
-    return $self->_reduce_op( $others, 'union', 'Womo::Relation::Union',
-        [ @{ $self->heading } ],
-    );
+    return $self->_reduce_op( $others, 'union', [ @{ $self->heading } ], );
 }
 
 sub intersection {
@@ -165,9 +210,7 @@ sub intersection {
 
     confess 'TODO: infinite relation?' if ( @_ == 0 );
     my $others = $self->_array_arg_ensure_same_headings(@_);
-    return $self->_reduce_op(
-        $others, 'intersection',
-        'Womo::Relation::Intersection',
+    return $self->_reduce_op( $others, 'intersection',
         [ @{ $self->heading } ],
     );
 }
@@ -178,15 +221,14 @@ sub join {
     my $others = $self->_array_arg(@_);
     return $self if ( @$others == 0 );
     my $heading = set( map { @{ $_->heading } } ( $self, @$others ) );
-    return $self->_reduce_op( $others, 'join', 'Womo::Relation::Join',
-        [ sort $heading->members ],
+    return $self->_reduce_op( $others, 'join', [ sort $heading->members ],
     );
 }
 
 sub _reduce_op {
-    my ( $self, $others, $op_method, $op_class, $heading ) = @_;
+    my ( $self, $others, $op, $heading ) = @_;
 
-    # TODO: deal better with $others not doing Womo::Relation::Role (ie not SQL backed)
+# TODO: deal better with $others not doing Womo::Relation::Role (ie not SQL backed)
     my ( @does, @not );
     for my $r (@$others) {
         if ( does_role( $r, 'Womo::Relation::Role' ) ) {
@@ -199,19 +241,20 @@ sub _reduce_op {
 
     if ( @not != 0 ) {
         my $one = shift @not;
-        return ( @not ? $one->$op_method(@not) : $one )
-            ->$op_method( ( @does ? $self->$op_method(@does) : $self ) );
+        return ( @not ? $one->$op(@not) : $one )
+            ->$op( ( @does ? $self->$op(@does) : $self ) );
     }
 
-    if ( @$others == 1 ) {
-        return $op_class->new(
-            parent  => $self,
-            other   => $others->[0],
-            heading => $heading,
-        );
-    }
-    my $one = shift @$others;
-    return $self->$op_method($one)->$op_method($others);
+    return $self->_new_relation(
+        'ast' => {
+            'type'    => 'operator',
+            'op'      => $op,
+            'args'    => [ map { $_->_ast } ( $self, @$others ) ],
+            'heading' => $heading,
+
+        },
+        'depot' => $self->_depot,
+    );
 }
 
 sub _hash_arg {
@@ -295,15 +338,6 @@ sub export_for_new {
 }
 
 with 'Set::Relation';
-
-# timing issues
-require Womo::Relation::Iterator::STH;
-require Womo::Relation::Restriction;
-require Womo::Relation::Projection;
-require Womo::Relation::Rename;
-require Womo::Relation::Union;
-require Womo::Relation::Intersection;
-require Womo::Relation::Join;
 
 1;
 __END__

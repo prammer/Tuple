@@ -28,9 +28,11 @@ my @supplier_tuples =
 
 my $s1 = $s->restriction( sno => 'S1' );
 my $s2 = $s->restriction( { sno => 'S1' } );
+my $s3 = $s->restriction( sub { $_->{sno} eq 'S1' } );
 my $expect = relation( [ $supplier_tuples[0] ] );
 ok( $s1->is_identical($expect), 'restriction' );
 ok( $s2->is_identical($expect), 'restriction' );
+ok( $s3->is_identical($expect), 'restriction' );
 cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
 cmp_bag( $s1->members, $expect->members, 'same members' );
 
@@ -65,6 +67,11 @@ cmp_ok( $t->{sname}, 'eq', 'Jones', 'sname is Jones' );
 cmp_ok( $t->{color}, 'eq', 'Red',   'color is Red' );
 cmp_ok( $t->{qty},   '==', 300,     'qty is 300' );
 
+# projection on an iterator (not sth) based restriction
+my $s4 = $s3->projection(qw(sname status));
+$expect = relation(
+    [ { map { $_ => $supplier_tuples[0]->{$_} } qw(sname status) } ] );
+ok( $s4->is_identical($expect), 'restriction' );
 
 
 __END__
