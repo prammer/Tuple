@@ -24,6 +24,13 @@ has '_components' => (
     },
 );
 
+sub pairs {
+    my $self = shift;
+    require Pair;
+    my $c = $self->_components;
+    return ( map { Pair->new( $_ => $c->{$_} ) } keys %$c );
+}
+
 sub _is_identical_value {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $t1, $t2 ) = @_;
