@@ -1,20 +1,28 @@
 
+package Pair::Role;
+use Moose::Role;
+use warnings FATAL => 'all';
+use Enum;
+use namespace::autoclean;
+
+with 'Enum::Role';
+
+around 'value' => sub {
+    my $code = shift;
+    if ( @_ == 2 ) {
+        return $_[0]->{ $_[0]->key } = $_[1];
+    }
+    return $code->(@_);
+};
+
+
 package Pair;
 
 use Moose;
 use warnings FATAL => 'all';
 use namespace::autoclean;
 
-extends 'Hash';
-
-override BUILDARGS => sub {
-    my $class = shift;
-    confess 'expecting 2 values but got ' . scalar(@_) if ( @_ != 2 );
-    return super();
-};
-
-sub key   { ( keys( %{$_[0]} ) )[0] }
-sub value { ( values( %{$_[0]} ) )[0] }
+with 'Pair::Role';
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 1;
