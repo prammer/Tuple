@@ -1,4 +1,11 @@
 
+package Tuple::Role;
+use Moose::Role;
+use warnings FATAL => 'all';
+use namespace::autoclean;
+with qw(Any New);
+
+
 package Tuple;
 use Moose;
 use Set::Object qw(set);
@@ -6,29 +13,15 @@ use MooseX::Identity qw(is_identical);
 use warnings FATAL => 'all';
 use namespace::autoclean;
 
-with 'MooseX::Identity::Role';
+with 'Tuple::Role';
 
-override BUILDARGS => sub {
-    # TODO: Readonly?
-    return +{ _components => super() };
-};
-
-has '_components' => (
-    is      => 'ro',
-    isa     => 'HashRef',
-    traits  => ['Hash'],
-    handles => {
-        degree     => 'count',
-        attributes => 'keys',
-        flatten    => 'elements',
-    },
-);
+sub attributes { return keys( %{ $_[0] } ) }
+sub degree     { return scalar( keys( %{ $_[0] } ) ) }
 
 sub pairs {
     my $self = shift;
     require Pair;
-    my $c = $self->_components;
-    return ( map { Pair->new( $_ => $c->{$_} ) } keys %$c );
+    return ( map { Pair->new( $_ => $self->{$_} ) } keys %$self );
 }
 
 sub _is_identical_value {
@@ -47,39 +40,36 @@ sub _is_identical_value {
 sub attr {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $self, $a ) = @_;
-    my $c = $self->_components;
-    ( exists $c->{$a} )
+    ( exists $self->{$a} )
         or confess "not an attribute of this tuple: $a";
-    return $c->{$a};
+    return $self->{$a};
 }
 
 sub attrs {
     my $self = shift;
     my @a = ( @_ == 1 && ref($_[0]) eq 'ARRAY') ? @{$_[0]} : @_;
 
-    my $c = $self->_components;
     return map {
-        ( exists $c->{$_} )
+        ( exists $self->{$_} )
             or confess "not an attribute of this tuple: $_";
-        $c->{$_}
+        $self->{$_}
     } @a;
 }
 
 sub has_attr {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $self, $a ) = @_;
-    return exists $self->_components->{$a};
+    return exists $self->{$a};
 }
 
 sub projection {
     my $self = shift;
 
-    my $c = $self->_components;
     return (blessed $self)->new(
         map {
-            ( exists $c->{$_} )
+            ( exists $self->{$_} )
                 or confess "not an attribute of this tuple: $_";
-            $_ => $c->{$_}
+            $_ => $self->{$_}
         } @_
     );
 }
@@ -90,8 +80,8 @@ sub heading {
     return set( $self->attributes );
 }
 
-# call this ->extension ?
-sub union {
+# call this ->extension ? ->merge ?
+sub extension {
     my $self = shift;
 
     return $self if @_ == 0;
@@ -123,7 +113,7 @@ sub union {
 # Hash ?
 # HashRef ?
 
-__PACKAGE__->meta->make_immutable;
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);
 1;
 __END__
 
