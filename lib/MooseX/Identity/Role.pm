@@ -11,6 +11,10 @@ sub is_identical {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $self, $other ) = @_;
     confess 'is_identical is not a class method' if !ref($self);
+
+    # should this be here as a shortcut? can it be wrong?
+#    return 1 if ( ref($other) && ( refaddr($self) == refaddr($other) ) );
+
     return if !$self->_is_identical_class($other);
     return $self->_is_identical_value($other);
 }
