@@ -4,7 +4,7 @@ package Enum::Role;
 use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
-with qw(Any New);
+with qw(Any New Moose::Autobox::Hash);
 
 sub BUILDARGS {
     my $class = shift;
@@ -22,6 +22,8 @@ sub value {
     return ( values( %{ $_[0] } ) )[0];
 }
 
+sub elems  {1}
+
 
 package Enum;
 
@@ -31,6 +33,9 @@ use MooseX::Identity qw(is_identical);
 use namespace::autoclean;
 
 with 'Enum::Role';
+
+sub put    { confess 'cannot modify' }
+sub delete { confess 'cannot modify' }
 
 sub _is_identical_value {
     my ( $self, $other ) = @_;
