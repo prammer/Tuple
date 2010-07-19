@@ -6,11 +6,11 @@ use warnings FATAL => 'all';
 use namespace::autoclean;
 with qw(Any New Moose::Autobox::Hash);
 
-sub BUILDARGS {
+override 'BUILDARGS' => sub {
     my $class = shift;
     confess 'expecting 2 values but got ' . scalar(@_) if ( @_ != 2 );
-    return Moose::Object::BUILDARGS( $class, @_ );
-}
+    return super();
+};
 
 sub key {
     confess 'too many arguments' if @_ > 1;
