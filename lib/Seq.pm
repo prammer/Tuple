@@ -6,7 +6,7 @@ use warnings FATAL => 'all';
 use namespace::autoclean;
 
 with (
-    'Moose::Autobox::Array',
+#    'Moose::Autobox::Array',
     'Any',
     'New',
 );
@@ -37,6 +37,17 @@ sub pairs {
 }
 
 sub elems { $_[0]->length }
+
+# stolen from Moose::Autobox::Array, is it what we want?
+sub map {
+    my ( $self, $sub ) = @_;
+    [ CORE::map { $sub->($_) } @$self ];
+}
+
+#TODO
+sub each {
+    my ($self, $sub) = @_;
+}
 
 package Seq;
 use Moose;
