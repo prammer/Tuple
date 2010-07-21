@@ -1,5 +1,5 @@
 
-package EnumSet::Role;
+package EnumMap::Role;
 use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
@@ -30,14 +30,14 @@ sub iterator {
     });
 }
 
-package EnumSet;
+package EnumMap;
 
 use Moose;
 use warnings FATAL => 'all';
 use MooseX::Identity qw(is_identical);
 use namespace::autoclean;
 
-with 'EnumSet::Role';
+with 'EnumMap::Role';
 
 #sub put    { confess 'cannot modify' }
 #sub delete { confess 'cannot modify' }

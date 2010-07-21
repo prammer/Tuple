@@ -3,10 +3,10 @@ package Hash::Role;
 use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
-use EnumSet;
+use EnumMap;
 
 with (
-    'EnumSet::Role',
+    'EnumMap::Role',
 );
 
 
