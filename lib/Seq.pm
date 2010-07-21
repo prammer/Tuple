@@ -43,14 +43,19 @@ sub tuples {
     return $self->map( sub { Tuple->new( key => $i++, value => $_ ) } );
 }
 
-sub elems { scalar( @$_[0] ) }
+sub elems { scalar( @{ $_[0] } ) }
 
 sub degree {2}
 use Method::Alias 'cardnality' => 'elems';
 
+#use Data::Thunk qw(lazy);
+#use Scalar::Defer qw(lazy);
 sub map {
     my ( $self, $sub ) = @_;
-    return $self->new( CORE::map { $sub->($_) } @$self );
+    return  $self->new( CORE::map { $sub->($_) } @$self );
+#    return lazy { $self->new( CORE::map { $sub->($_) } @$self ) };
+#    return lazy { $self->new( CORE::map { lazy { $sub->($_) } } @$self ) };
+#    return  $self->new( CORE::map { lazy { $sub->($_) } } @$self );
 }
 
 sub each {
