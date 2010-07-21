@@ -9,32 +9,38 @@ with qw(Any New);
 package Tuple;
 use Moose;
 use Set::Object qw(set);
-use MooseX::Identity qw(is_identical);
 use warnings FATAL => 'all';
 use namespace::autoclean;
 
-with 'Tuple::Role';
+with (
+    'Tuple::Role',
+    'MooseX::WHICH',
+);
 
 sub attributes { return keys( %{ $_[0] } ) }
 sub degree     { return scalar( keys( %{ $_[0] } ) ) }
 
+sub enums {
+    my $self = shift;
+    require Enum;
+    return [ map { Enum->new( $_ => $self->{$_} ) } keys %$self ];
+}
+
 sub pairs {
     my $self = shift;
     require Pair;
-    return ( map { Pair->new( $_ => $self->{$_} ) } keys %$self );
+    return [ map { Pair->new( $_ => $self->{$_} ) } keys %$self ];
 }
 
-sub _is_identical_value {
-    confess 'wrong number of arguments' if ( @_ != 2 );
-    my ( $t1, $t2 ) = @_;
+sub EnumMap {
+    my $self = shift;
+    require EnumMap;
+    return EnumMap->new(%$self);
+}
 
-    my $h1 = $t1->heading;
-    my $h2 = $t2->heading;
-    return if ( $h1->not_equal($h2) );
-    for my $a ( $h1->members ) {
-        return if ( !is_identical( $t1->attr($a), $t2->attr($a) ) );
-    }
-    return 1;
+sub WHICH {
+    my $self = shift;
+    return $self->EnumMap;
 }
 
 sub attr {
