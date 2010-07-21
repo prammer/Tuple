@@ -10,6 +10,12 @@ with (
     'New',
 );
 
+sub enums {
+    my $self = shift;
+    require Enum;
+    return [ map { Enum->new( $_ => $self->{$_} ) } keys %$self ];
+}
+
 sub pairs {
     my $self = shift;
     require Pair;
