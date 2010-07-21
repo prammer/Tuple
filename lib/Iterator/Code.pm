@@ -38,15 +38,17 @@ sub next {
 sub has_next {
     my $self = shift;
 
-    return 1 if $self->_has_buf;
-    my $item = $self->_code->();
-    return 0 if !defined $item;
-    $self->_buf($item);
-    return 1;
+    return ( defined $self->peek ) ? 1 : 0;
 }
 
 sub peek {
-    die;
+    my $self = shift;
+
+    return $self->_buf if $self->_has_buf;
+    my $item = $self->_code->();
+    return if !defined $item;
+    $self->_buf($item);
+    return $item;
 }
 
 __PACKAGE__->meta->make_immutable;
