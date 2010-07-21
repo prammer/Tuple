@@ -49,6 +49,8 @@ sub _is_identical_value {
     return 1;
 }
 
+#sub WHICH { return $_[0] }
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 1;
 __END__

@@ -5,7 +5,7 @@ use Scalar::Util 'refaddr';
 use Moose::Role;
 use namespace::autoclean;
 
-#requires '_is_identical_value';
+requires '_is_identical_value';
 
 sub is_identical {
     confess 'wrong number of arguments' if ( @_ != 2 );
@@ -19,13 +19,15 @@ sub is_identical {
     return $self->_is_identical_value($other);
 }
 
-sub _is_identical_value {
-    confess 'wrong number of arguments' if ( @_ != 2 );
-    my ( $self, $other ) = @_;
-    confess 'is_identical is not a class method' if !ref($self);
-    return 1 if ( ref($other) && ( refaddr($self) == refaddr($other) ) );
-    return 0;
-}
+# this would be good as a default for things that
+# do not implement WHICH
+#sub _is_identical_value {
+#    confess 'wrong number of arguments' if ( @_ != 2 );
+#    my ( $self, $other ) = @_;
+#    confess 'is_identical is not a class method' if !ref($self);
+#    return 1 if ( ref($other) && ( refaddr($self) == refaddr($other) ) );
+#    return 0;
+#}
 
 sub _is_identical_class {
     confess 'wrong number of arguments' if ( @_ != 2 );

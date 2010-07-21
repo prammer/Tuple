@@ -9,10 +9,7 @@ with 'MooseX::Identity::Role';
 
 requires 'WHICH';
 
-# doing 'around' because I guess a role method can't override another role method
-# without a conflict showing up when a class composes it
-around '_is_identical_value' => sub {
-    my $orig = shift;
+sub _is_identical_value {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $self, $other ) = @_;
     confess '_is_identical_value is not a class method' if !ref($self);

@@ -14,7 +14,6 @@ use namespace::autoclean;
 
 with (
     'Tuple::Role',
-    'MooseX::WHICH',
 );
 
 sub attributes { return keys( %{ $_[0] } ) }
