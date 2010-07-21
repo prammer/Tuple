@@ -4,7 +4,11 @@ package Enum::Role;
 use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
-with qw(Any New Moose::Autobox::Hash);
+with (
+    'Any',
+    'New',
+#    'Moose::Autobox::Hash',
+);
 
 override 'BUILDARGS' => sub {
     my $class = shift;
