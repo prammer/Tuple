@@ -33,20 +33,29 @@ sub pairs {
     my $self = shift;
     require Pair;
     my $i = 0;
-    return [ map { Pair->new( $i => $self->[ $i++ ] ) } @$self ];
+    return $self->map( sub { Pair->new( $i++ => $_ ) } );
 }
 
-sub elems { $_[0]->length }
+sub tuples {
+    my $self = shift;
+    require Tuple;
+    my $i = 0;
+    return $self->map( sub { Tuple->new( key => $i++, value => $_ ) } );
+}
 
-# stolen from Moose::Autobox::Array, is it what we want?
+sub elems { scalar( @$_[0] ) }
+
+sub degree {2}
+use Method::Alias 'cardnality' => 'elems';
+
 sub map {
     my ( $self, $sub ) = @_;
-    [ CORE::map { $sub->($_) } @$self ];
+    return $self->new( CORE::map { $sub->($_) } @$self );
 }
 
-#TODO
 sub each {
-    my ($self, $sub) = @_;
+    my ( $self, $sub ) = @_;
+    $sub->($_) for (@$self);
 }
 
 package Seq;
@@ -57,12 +66,12 @@ use namespace::autoclean;
 
 with 'Seq::Role';
 
-sub push    { confess 'cannot modify' }
-sub pop     { confess 'cannot modify' }
-sub shift   { confess 'cannot modify' }
-sub unshift { confess 'cannot modify' }
-sub delete  { confess 'cannot modify' }
-sub put     { confess 'cannot modify' }
+#sub push    { confess 'cannot modify' }
+#sub pop     { confess 'cannot modify' }
+#sub shift   { confess 'cannot modify' }
+#sub unshift { confess 'cannot modify' }
+#sub delete  { confess 'cannot modify' }
+#sub put     { confess 'cannot modify' }
 
 sub _is_identical_value {
     confess 'wrong number of arguments' if ( @_ != 2 );
