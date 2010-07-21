@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use namespace::autoclean;
 
 with (
-    'Moose::Autobox::Hash',
+#    'Moose::Autobox::Hash',
     'Any',
     'New',
 );
@@ -39,8 +39,8 @@ use namespace::autoclean;
 
 with 'EnumSet::Role';
 
-sub put    { confess 'cannot modify' }
-sub delete { confess 'cannot modify' }
+#sub put    { confess 'cannot modify' }
+#sub delete { confess 'cannot modify' }
 
 sub _is_identical_value {
     confess 'wrong number of arguments' if ( @_ != 2 );

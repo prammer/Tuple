@@ -38,8 +38,8 @@ use namespace::autoclean;
 
 with 'Enum::Role';
 
-sub put    { confess 'cannot modify' }
-sub delete { confess 'cannot modify' }
+#sub put    { confess 'cannot modify' }
+#sub delete { confess 'cannot modify' }
 
 sub _is_identical_value {
     my ( $self, $other ) = @_;
