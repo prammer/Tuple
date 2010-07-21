@@ -12,9 +12,22 @@ use Test::Moose;
 
 {
     use Iterator::Array;
-    my @a = qw(a b c);
+    my @a = ( undef, 0, '', qw(a b c) );
     my $i = Iterator::Array->new(@a);
     isa_ok( $i, 'Iterator::Array' );
+    ok( $i->has_next );
+    ok( !defined $i->peek );
+    ok( !defined $i->next );
+    ok( $i->has_next );
+    is( $i->peek, 0 );
+    ok( $i->has_next );
+    is( $i->next, 0 );
+    ok( $i->has_next );
+    is( $i->peek, '' );
+    ok( $i->has_next );
+    is( $i->next, '' );
+    ok( $i->has_next );
+    is( $i->peek, 'a' );
     common($i);
 }
 
@@ -34,8 +47,8 @@ sub common {
     ok( $i->has_next );
     is( $i->next, 'c' );
     ok( !$i->has_next );
-    ok( ! defined $i->next );
-    ok( ! defined $i->peek );
+    ok( !defined $i->next );
+    ok( !defined $i->peek );
     ok( !$i->has_next );
 }
 
