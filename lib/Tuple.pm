@@ -65,7 +65,7 @@ sub has_attr {
 sub projection {
     my $self = shift;
 
-    return (blessed $self)->new(
+    return $self->new(
         map {
             ( exists $self->{$_} )
                 or confess "not an attribute of this tuple: $_";
@@ -106,7 +106,7 @@ sub extension {
     if ( $intersect->size > 0 ) {
         confess "not disjoint on: " . join( ', ', $intersect->members );
     }
-    return (blessed $self)->new( map { %$_ } @hrefs );
+    return $self->new( map { %$_ } @hrefs );
 }
 
 # flatten
