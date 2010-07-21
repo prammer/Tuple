@@ -7,6 +7,8 @@ use Test::Moose;
     my @a = qw(a b c);
     my $i = Iterator::Code->new( sub { shift @a } );
     isa_ok( $i, 'Iterator::Code' );
+    my $i2 = Iterator::Code->new( sub { shift @a } );
+    ok( !$i->is_identical($i2) );
     common($i);
 }
 
@@ -15,6 +17,8 @@ use Test::Moose;
     my @a = ( undef, 0, '', qw(a b c) );
     my $i = Iterator::Array->new(@a);
     isa_ok( $i, 'Iterator::Array' );
+    my $i2 = Iterator::Array->new(@a);
+    ok( !$i->is_identical($i2) );
     ok( $i->has_next );
     ok( !defined $i->peek );
     ok( !defined $i->next );
@@ -33,6 +37,7 @@ use Test::Moose;
 
 sub common {
     my $i = shift;
+    $i->is_identical($i);
     does_ok( $i, 'Iterator' );
     ok( $i->has_next );
     is( $i->peek, 'a' );
