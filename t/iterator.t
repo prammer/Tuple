@@ -1,4 +1,7 @@
 
+use warnings FATAL => 'all';
+use strict;
+
 use Test::Most;
 use Test::Moose;
 
