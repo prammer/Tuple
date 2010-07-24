@@ -1,5 +1,5 @@
 
-package Iterator::Wrap;
+package Iterator::Map;
 
 use Moose;
 use warnings FATAL => 'all';
