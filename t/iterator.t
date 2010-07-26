@@ -81,6 +81,15 @@ sub common {
         my $mapped = $i->map( sub { $_ . $_ } )->eager;
         is_deeply( $mapped, [qw(aa bb cc)] );
     }
+    # map - can return empty array or multiple items
+    {
+        my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+        my $mapped
+            = $i->map( sub { ( $_ eq 'b' ) ? ( $_, 1, 2, 3, 4 ) : () } )
+            ->eager;
+        is_deeply( $mapped, [qw(b 1 2 3 4)],
+            'map can return empty array and/or multiple items' );
+    }
 
     # grep
     {
