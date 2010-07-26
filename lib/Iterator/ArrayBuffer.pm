@@ -20,13 +20,20 @@ has '_buf' => (
 sub next {
     my $self = shift;
 
-    return if !$self->has_next;
+    if ( my $array = $self->_buf ) {
+        my $item = shift @$array;
+        $self->_clear_buf if ( @$array == 0 );
+        return $item;
+    }
 
-    # we must have a non-empty array in _buf now
-    my $array = $self->_buf;
-    my $item  = shift @$array;
-    $self->_clear_buf if ( @$array == 0 );
-    return $item;
+    while (1) {
+        my $more = $self->_get_more or return;
+        next if ( @$more == 0 );
+        return $more->[0] if ( @$more == 1 );
+        my $item = shift @$more;
+        $self->_buf($more);
+        return $item;
+    }
 }
 
 sub has_next {
@@ -35,10 +42,12 @@ sub has_next {
     return 1 if $self->_has_buf;
 
     # see if we can fill _buf with a non-empty array
-    my $more = $self->_get_more or return;
-    return if @$more == 0;
-    $self->_buf($more);
-    return 1;
+    while (1) {
+        my $more = $self->_get_more or return;
+        next if ( @$more == 0 );
+        $self->_buf($more);
+        return 1;
+    }
 }
 
 sub peek {
