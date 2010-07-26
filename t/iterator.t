@@ -88,6 +88,13 @@ sub common {
         my $filtered = $i->grep( sub { $_ eq 'c' } )->eager;
         is_deeply( $filtered, ['c'] );
     }
+
+    # flatten
+    {
+        my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+        my @a = $i->flatten;
+        is_deeply( \@a, [qw(a b c)] );
+    }
 }
 
 done_testing();

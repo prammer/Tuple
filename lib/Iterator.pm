@@ -21,6 +21,11 @@ sub eager {
     return Array->new(@a);
 }
 
+sub flatten {
+    my $self = shift;
+    return $self->eager->flatten;
+}
+
 sub map {
     my ( $self, $code ) = @_;
     require Iterator::Map;
@@ -35,7 +40,6 @@ sub grep {
 # which of these do we want? and what do they return?
 # sub Seq
 # sub Array
-# sub flatten
 
 1;
 __END__
