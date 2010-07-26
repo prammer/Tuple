@@ -53,25 +53,27 @@ my %make_new = (
 
 sub common {
     my $class = shift or die;
-    my $i = $make_new{$class}->( [qw(a b c)] ) or die;
-    ok( $i->is_identical($i) );
-    does_ok( $i, 'Iterator' );
-    ok( $i->has_next );
-    is( $i->peek, 'a' );
-    ok( $i->has_next );
-    is( $i->next, 'a' );
-    ok( $i->has_next );
-    is( $i->peek, 'b' );
-    ok( $i->has_next );
-    is( $i->next, 'b' );
-    ok( $i->has_next );
-    is( $i->peek, 'c' );
-    ok( $i->has_next );
-    is( $i->next, 'c' );
-    ok( !$i->has_next );
-    ok( !defined $i->next );
-    ok( !defined $i->peek );
-    ok( !$i->has_next );
+    {
+        my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+        ok( $i->is_identical($i) );
+        does_ok( $i, 'Iterator' );
+        ok( $i->has_next );
+        is( $i->peek, 'a' );
+        ok( $i->has_next );
+        is( $i->next, 'a' );
+        ok( $i->has_next );
+        is( $i->peek, 'b' );
+        ok( $i->has_next );
+        is( $i->next, 'b' );
+        ok( $i->has_next );
+        is( $i->peek, 'c' );
+        ok( $i->has_next );
+        is( $i->next, 'c' );
+        ok( !$i->has_next );
+        ok( !defined $i->next );
+        ok( !defined $i->peek );
+        ok( !$i->has_next );
+    }
 }
 
 done_testing();
