@@ -22,7 +22,7 @@ sub value {
 
 sub enums {
     my $self = shift;
-    return $self->Array->iterator;
+    return $self->Array;
 }
 
 sub Tuple {
@@ -34,7 +34,7 @@ sub Tuple {
 sub tuples {
     my $self = shift;
     require Array;
-    return Array->new( $self->Tuple )->iterator;
+    return Array->new( $self->Tuple );
 }
 
 sub elems  {1}
@@ -93,7 +93,7 @@ sub Pair {
 sub pairs {
     my $self = shift;
     require Array;
-    return Array->new( $self->Pair )->iterator;
+    return Array->new( $self->Pair );
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

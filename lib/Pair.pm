@@ -17,7 +17,7 @@ around 'value' => sub {
 
 sub pairs {
     my $self = shift;
-    return $self->Array->iterator;
+    return $self->Array;
 }
 
 package Pair;
