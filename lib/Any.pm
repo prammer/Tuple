@@ -13,6 +13,16 @@ with (
 
 sub WHICH { return refaddr( $_[0] ) }
 
+requires (
+    'elems',
+    'map',
+    'grep',
+    'each',
+    'enums',
+    'pairs',
+    'tuples',
+);
+
 1;
 __END__
 

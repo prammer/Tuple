@@ -15,6 +15,10 @@ around 'value' => sub {
     return $code->(@_);
 };
 
+sub pairs {
+    my $self = shift;
+    return $self->Array->iterator;
+}
 
 package Pair;
 

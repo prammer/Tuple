@@ -5,12 +5,6 @@ use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
 
-with (
-#    'Moose::Autobox::Array',
-    'Any',
-    'BlessedArray',
-);
-
 sub iterator {
     my $self = shift;
     require Tuple;
@@ -22,6 +16,13 @@ sub iterator {
         $i++;
         return Tuple->new( key => $i, value => shift @$a, );
     });
+}
+
+sub enums {
+    my $self = shift;
+    require Enum;
+    my $i = 0;
+    return $self->map( sub { Enum->new( $i++ => $_ ) } );
 }
 
 sub pairs {
@@ -43,20 +44,30 @@ sub elems { scalar( @{ $_[0] } ) }
 sub degree {2}
 use Method::Alias 'cardnality' => 'elems';
 
-#use Data::Thunk qw(lazy);
-#use Scalar::Defer qw(lazy);
-sub map {
-    my ( $self, $sub ) = @_;
-    return  $self->new( CORE::map { $sub->($_) } @$self );
-#    return lazy { $self->new( CORE::map { $sub->($_) } @$self ) };
-#    return lazy { $self->new( CORE::map { lazy { $sub->($_) } } @$self ) };
-#    return  $self->new( CORE::map { lazy { $sub->($_) } } @$self );
+# this is not right.  Seq will have to mean something different
+# from Array and/or Iterator at some point
+sub Array {
+    my $self = shift;
+    require Array;
+    return Array->new(@$self);
 }
 
-sub each {
-    my ( $self, $sub ) = @_;
-    $sub->($_) for (@$self);
+# delegate to Array
+for my $method (qw(map grep each)) {
+    __PACKAGE__->meta->add_method(
+        $method => sub {
+            my $self = shift;
+            return $self->Array->$method(@_);
+        }
+    );
 }
+
+with (
+#    'Moose::Autobox::Array',
+    'Any',
+    'BlessedArray',
+);
+
 
 package Seq;
 use Moose;

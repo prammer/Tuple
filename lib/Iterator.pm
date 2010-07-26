@@ -70,6 +70,11 @@ sub tuples {
     return $self->map( sub { Tuple->new( key => $i++, value => $_ ) } );
 }
 
+sub elems {
+    my $self = shift;
+    return $self->eager->elems;
+}
+
 1;
 __END__
 

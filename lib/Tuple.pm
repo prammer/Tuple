@@ -3,6 +3,30 @@ package Tuple::Role;
 use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
+
+sub EnumMap {
+    my $self = shift;
+    require EnumMap;
+    return EnumMap->new(%$self);
+}
+
+# delegate to EnumMap
+for my $method (qw(enums pairs map grep each elems)) {
+    __PACKAGE__->meta->add_method(
+        $method => sub {
+            my $self = shift;
+            return $self->EnumMap->$method(@_);
+        }
+    );
+}
+
+sub tuples {
+    my $self = shift;
+    require Array;
+    return Array->new($self)->iterator;
+}
+
+
 with qw(Any New);
 
 
@@ -18,24 +42,6 @@ with (
 
 sub attributes { return keys( %{ $_[0] } ) }
 sub degree     { return scalar( keys( %{ $_[0] } ) ) }
-
-sub enums {
-    my $self = shift;
-    require Enum;
-    return [ map { Enum->new( $_ => $self->{$_} ) } keys %$self ];
-}
-
-sub pairs {
-    my $self = shift;
-    require Pair;
-    return [ map { Pair->new( $_ => $self->{$_} ) } keys %$self ];
-}
-
-sub EnumMap {
-    my $self = shift;
-    require EnumMap;
-    return EnumMap->new(%$self);
-}
 
 sub WHICH {
     my $self = shift;

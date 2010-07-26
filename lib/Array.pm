@@ -7,12 +7,6 @@ use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
 
-with (
-    'BlessedArray',
-    'Any',
-    'Moose::Autobox::Array',
-);
-
 sub iterator {
     my $self = shift;
     require Iterator::Array;
@@ -32,6 +26,13 @@ for my $method (qw(map grep each enums pairs tuples)) {
         }
     );
 }
+
+with (
+    'BlessedArray',
+    'Any',
+    'Moose::Autobox::Array' => { excludes =>[qw(each grep map)], },
+);
+
 
 package Array;
 use Moose;

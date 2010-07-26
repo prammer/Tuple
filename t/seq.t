@@ -13,7 +13,8 @@ use Seq;
     ok( $s->is_identical( Seq->new(qw(a 1)) ) );
     ok( !$s->is_identical( Seq->new( [qw(a 1)] ) ) );
     is( $s->elems, 2 );
-    my $s2 = $s->map(sub { $_ . $_ });
+    my $s2 = $s->map(sub { $_ . $_ })->eager;
+    #TODO: check $s2 is still a Seq (if that matters)
     is( $s2->[0], 'aa');
     is( $s2->[1], '11');
 }

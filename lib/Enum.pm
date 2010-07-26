@@ -4,12 +4,6 @@ package Enum::Role;
 use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
-with (
-    'Any',
-    'New',
-#    'Moose::Autobox::Hash',
-);
-
 override 'BUILDARGS' => sub {
     my $class = shift;
     confess 'expecting 2 values but got ' . scalar(@_) if ( @_ != 2 );
@@ -26,7 +20,46 @@ sub value {
     return ( values( %{ $_[0] } ) )[0];
 }
 
+sub enums {
+    my $self = shift;
+    return $self->Array->iterator;
+}
+
+sub Tuple {
+    my $self = shift;
+    require Tuple;
+    return Tuple->new( key => $self->key, value => $self->value );
+}
+
+sub tuples {
+    my $self = shift;
+    require Array;
+    return Array->new( $self->Tuple )->iterator;
+}
+
 sub elems  {1}
+
+sub Array {
+    my $self = shift;
+    require Array;
+    return Array->new($self);
+}
+
+# delegate to Array
+for my $method (qw(map grep each)) {
+    __PACKAGE__->meta->add_method(
+        $method => sub {
+            my $self = shift;
+            return $self->Array->$method(@_);
+        }
+    );
+}
+
+with (
+    'Any',
+    'New',
+#    'Moose::Autobox::Hash',
+);
 
 
 package Enum;
@@ -50,6 +83,18 @@ sub _is_identical_value {
 }
 
 #sub WHICH { return $_[0] }
+
+sub Pair {
+    my $self = shift;
+    require Pair;
+    return Pair->new( $self->key, $self->value );
+}
+
+sub pairs {
+    my $self = shift;
+    require Array;
+    return Array->new( $self->Pair )->iterator;
+}
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 1;

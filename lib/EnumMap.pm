@@ -4,27 +4,34 @@ use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
 
-with (
-#    'Moose::Autobox::Hash',
-    'Any',
-    'New',
-);
+sub __enum_pair {
+    my ($self, $class) = @_;
+    require Iterator::Code;
+    my $h = {%$self};
+    return Iterator::Code->new(sub {
+        my $k = ( keys(%$h) )[0];
+        return if !defined $k;
+        return $class->new( $k, delete $h->{$k}, );
+    });
+}
 
 sub enums {
     my $self = shift;
     require Enum;
-    return [ map { Enum->new( $_ => $self->{$_} ) } keys %$self ];
+    return $self->__enum_pair('Enum');
+#    return [ map { Enum->new( $_ => $self->{$_} ) } keys %$self ];
 }
 
 sub pairs {
     my $self = shift;
     require Pair;
-    return [ map { Pair->new( $_ => $self->{$_} ) } keys %$self ];
+    return $self->__enum_pair('Pair');
+#    return [ map { Pair->new( $_ => $self->{$_} ) } keys %$self ];
 }
 
 sub elems  { scalar( keys( %{ $_[0] } ) ) }
 
-sub iterator {
+sub tuples {
     my $self = shift;
     require Tuple;
     require Iterator::Code;
@@ -35,6 +42,23 @@ sub iterator {
         return Tuple->new( key => $k, value => delete $h->{$k}, );
     });
 }
+
+# delegate to pairs
+for my $method (qw(map grep each)) {
+    __PACKAGE__->meta->add_method(
+        $method => sub {
+            my $self = shift;
+            return $self->pairs->$method(@_);
+        }
+    );
+}
+
+with (
+#    'Moose::Autobox::Hash',
+    'Any',
+    'New',
+);
+
 
 package EnumMap;
 

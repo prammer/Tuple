@@ -14,7 +14,7 @@ use Pair;
     isa_ok( $h, 'Hash' );
     ok( $h->is_identical($h) );
     ok( !$h->is_identical( Hash->new( a => 1, b => 2 ) ) );
-    my $it = $h->iterator;
+    my $it = $h->tuples;
     my @t;
     while ($it->has_next) {
         my $t = $it->next;
@@ -25,7 +25,7 @@ use Pair;
     ok( $t[0]->is_identical( Tuple->new( key => 'a', value => 1 ) ) );
     ok( $t[1]->is_identical( Tuple->new( key => 'b', value => 2 ) ) );
 
-    my $p = $h->pairs;
+    my $p = $h->pairs->eager;
     isa_ok( $_, 'Pair' ) for (@$p);
     $p = [sort { $a->key cmp $b->key } @$p];
     is( $p->[0]->key, 'a' );
