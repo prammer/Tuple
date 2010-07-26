@@ -37,9 +37,38 @@ sub grep {
     return $self->map( sub { $code->($_) ? $_ : () } );
 }
 
-# which of these do we want? and what do they return?
-# sub Seq
-# sub Array
+# map but with return values ignored.  is this useful?  call it ->for ?
+# it implies eagerness I guess.  dunno what else makes sense
+sub each {
+    my ( $self, $sub ) = @_;
+    my $map = $self->map($sub);
+    while ( $self->has_next ) {
+        local $_ = $self->next;
+        $sub->($_);
+    }
+    return;
+}
+
+sub enums {
+    my $self = shift;
+    require Enum;
+    my $i = 0;
+    return $self->map( sub { Enum->new( $i++ => $_ ) } );
+}
+
+sub pairs {
+    my $self = shift;
+    require Pair;
+    my $i = 0;
+    return $self->map( sub { Pair->new( $i++ => $_ ) } );
+}
+
+sub tuples {
+    my $self = shift;
+    require Tuple;
+    my $i = 0;
+    return $self->map( sub { Tuple->new( key => $i++, value => $_ ) } );
+}
 
 1;
 __END__

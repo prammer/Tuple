@@ -95,6 +95,57 @@ sub common {
         my @a = $i->flatten;
         is_deeply( \@a, [qw(a b c)] );
     }
+
+    # each
+    {
+        my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+        my $x = 0;
+        $i->each( sub { $x++ } );
+        is( $x, 3 );
+    }
+
+    # enums
+    {
+        my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+        my $e = $i->enums->eager;
+        is_deeply(
+            $e,
+            [
+                Enum->new( 0, 'a' ),
+                Enum->new( 1, 'b' ),
+                Enum->new( 2, 'c' ),
+            ],
+        );
+    }
+
+    # pairs
+    {
+        my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+        my $p = $i->pairs->eager;
+        is_deeply(
+            $p,
+            [
+                Pair->new( 0, 'a' ),
+                Pair->new( 1, 'b' ),
+                Pair->new( 2, 'c' ),
+            ],
+        );
+    }
+
+    # tuples
+    {
+        my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+        my $t = $i->tuples->eager;
+        is_deeply(
+            $t,
+            [
+                Tuple->new( key => 0, value => 'a' ),
+                Tuple->new( key => 1, value => 'b' ),
+                Tuple->new( key => 2, value => 'c' ),
+            ],
+        );
+    }
+
 }
 
 done_testing();
