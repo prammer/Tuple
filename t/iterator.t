@@ -79,7 +79,7 @@ sub common {
     {
         my $i = $make_new{$class}->( [qw(a b c)] ) or die;
         my $mapped = $i->map( sub { $_ . $_ } )->eager;
-        is_deeply( $mapped, [qw(aa bb cc)] );
+        is_deeply( $mapped, [qw(aa bb cc)], 'simple map' );
     }
     # map - can return empty array or multiple items
     {
@@ -95,14 +95,14 @@ sub common {
     {
         my $i = $make_new{$class}->( [qw(a b c)] ) or die;
         my $filtered = $i->grep( sub { $_ eq 'c' } )->eager;
-        is_deeply( $filtered, ['c'] );
+        is_deeply( $filtered, ['c'], 'simple grep' );
     }
 
     # flatten
     {
         my $i = $make_new{$class}->( [qw(a b c)] ) or die;
         my @a = $i->flatten;
-        is_deeply( \@a, [qw(a b c)] );
+        is_deeply( \@a, [qw(a b c)], 'flatten' );
     }
 
     # each
@@ -110,7 +110,7 @@ sub common {
         my $i = $make_new{$class}->( [qw(a b c)] ) or die;
         my $x = 0;
         $i->each( sub { $x++ } );
-        is( $x, 3 );
+        is( $x, 3, 'each' );
     }
 
     # enums
@@ -124,6 +124,7 @@ sub common {
                 Enum->new( 1, 'b' ),
                 Enum->new( 2, 'c' ),
             ],
+            'enums',
         );
     }
 
@@ -138,6 +139,7 @@ sub common {
                 Pair->new( 1, 'b' ),
                 Pair->new( 2, 'c' ),
             ],
+            'pairs',
         );
     }
 
@@ -152,6 +154,7 @@ sub common {
                 Tuple->new( key => 1, value => 'b' ),
                 Tuple->new( key => 2, value => 'c' ),
             ],
+            'tuples',
         );
     }
 
