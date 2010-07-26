@@ -5,19 +5,33 @@ use strict;
 use Test::Most;
 use Test::Moose;
 
+my %make_new = (
+    'Iterator::Code' => sub {
+        my $a = shift;
+        return Iterator::Code->new( sub { shift @$a } );
+    },
+    'Iterator::Array' => sub {
+        my $a = shift;
+        return Iterator::Array->new(@$a);
+    },
+);
+
 {
     use Iterator::Code;
+    common('Iterator::Code');
+
     my @a = qw(a b c);
     my $i = Iterator::Code->new( sub { shift @a } );
     isa_ok( $i, 'Iterator::Code' );
     my $i2 = Iterator::Code->new( sub { shift @a } );
     ok( !$i->is_identical($i2) );
-    common($i);
 }
 
 {
     use Iterator::Array;
-    my @a = ( undef, 0, '', qw(a b c) );
+    common('Iterator::Array');
+
+    my @a = ( undef, 0, '', 'a');
     my $i = Iterator::Array->new(@a);
     isa_ok( $i, 'Iterator::Array' );
     my $i2 = Iterator::Array->new(@a);
@@ -35,12 +49,12 @@ use Test::Moose;
     is( $i->next, '' );
     ok( $i->has_next );
     is( $i->peek, 'a' );
-    common($i);
 }
 
 sub common {
-    my $i = shift;
-    $i->is_identical($i);
+    my $class = shift or die;
+    my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+    ok( $i->is_identical($i) );
     does_ok( $i, 'Iterator' );
     ok( $i->has_next );
     is( $i->peek, 'a' );
