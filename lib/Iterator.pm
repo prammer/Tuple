@@ -10,6 +10,33 @@ with(
     'Any',
 );
 
+sub eager {
+    my $self = shift;
+    require Array;
+    my @a;
+    while ( $self->has_next ) {
+        my $item = $self->next;
+        push @a, $item;
+    }
+    return Array->new(@a);
+}
+
+sub map {
+    my ( $self, $code ) = @_;
+    require Iterator::Map;
+    return Iterator::Map->new( iterator => $self, code => $code, );
+}
+
+sub grep {
+    my ( $self, $code ) = @_;
+    return $self->map( sub { $code->($_) ? $_ : () } );
+}
+
+# which of these do we want? and what do they return?
+# sub Seq
+# sub Array
+# sub flatten
+
 1;
 __END__
 

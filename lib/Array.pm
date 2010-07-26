@@ -1,12 +1,17 @@
 
+# a fully reified Perl 5 array -- no iterators or lazyness
+
 package Array::Role;
 
 use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
-use Seq;
 
-with 'Seq::Role';
+with (
+    'BlessedArray',
+    'Any',
+    'Moose::Autobox::Array',
+);
 
 package Array;
 use Moose;

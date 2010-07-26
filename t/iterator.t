@@ -74,6 +74,20 @@ sub common {
         ok( !defined $i->peek );
         ok( !$i->has_next );
     }
+
+    # map
+    {
+        my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+        my $mapped = $i->map( sub { $_ . $_ } )->eager;
+        is_deeply( $mapped, [qw(aa bb cc)] );
+    }
+
+    # grep
+    {
+        my $i = $make_new{$class}->( [qw(a b c)] ) or die;
+        my $filtered = $i->grep( sub { $_ eq 'c' } )->eager;
+        is_deeply( $filtered, ['c'] );
+    }
 }
 
 done_testing();

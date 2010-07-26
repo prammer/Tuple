@@ -8,13 +8,8 @@ use namespace::autoclean;
 with (
 #    'Moose::Autobox::Array',
     'Any',
-    'New',
+    'BlessedArray',
 );
-
-sub BUILDARGS {
-    my $class = shift;
-    return [@_];
-}
 
 sub iterator {
     my $self = shift;
