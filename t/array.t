@@ -17,9 +17,10 @@ use Array;
     my $i = $a->map( sub { $_ . $_ } );
     does_ok( $i, 'Iterator' );
     my $a2 = $i->eager;
-    isa_ok( $a, 'Array' );
-    is( $a2->[0], 'aa' );
-    is( $a2->[1], '11' );
+    isa_ok( $a2, 'Array' );
+    is( $a2->elems, 2 );
+    is( $a2->[0],   'aa' );
+    is( $a2->[1],   '11' );
 }
 
 done_testing;
