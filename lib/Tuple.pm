@@ -2,6 +2,7 @@
 package Tuple::Role;
 use Moose::Role;
 use warnings FATAL => 'all';
+use Set::Object qw(set);
 use namespace::autoclean;
 
 sub EnumMap {
@@ -26,32 +27,16 @@ for my $method (qw(enums pairs map grep each elems)) {
     );
 }
 
+with qw(Any New);
+
 sub tuples {
     my $self = shift;
     require Array;
     return Array->new($self);
 }
 
-with qw(Any New);
-
-
-package Tuple;
-use Moose;
-use Set::Object qw(set);
-use warnings FATAL => 'all';
-use namespace::autoclean;
-
-with (
-    'Tuple::Role',
-);
-
 sub attributes { return keys( %{ $_[0] } ) }
 sub degree     { return scalar( keys( %{ $_[0] } ) ) }
-
-sub WHICH {
-    my $self = shift;
-    return $self->EnumMap;
-}
 
 sub attr {
     confess 'wrong number of arguments' if ( @_ != 2 );
@@ -60,6 +45,7 @@ sub attr {
         or confess "not an attribute of this tuple: $a";
     return $self->{$a};
 }
+#use Method::Alias 'at' => 'attr';
 
 sub attrs {
     my $self = shift;
@@ -128,6 +114,21 @@ sub extension {
 # flatten
 # Hash ?
 # HashRef ?
+
+
+package Tuple;
+use Moose;
+use warnings FATAL => 'all';
+use namespace::autoclean;
+
+with (
+    'Tuple::Role',
+);
+
+sub WHICH {
+    my $self = shift;
+    return $self->EnumMap;
+}
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 1;
