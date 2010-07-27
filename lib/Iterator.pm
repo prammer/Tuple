@@ -25,6 +25,7 @@ sub flatten {
     my $self = shift;
     return $self->eager->flatten;
 }
+use Method::Alias 'flat' => 'flatten';
 
 sub map {
     my ( $self, $code ) = @_;

@@ -17,6 +17,8 @@ sub eager { $_[0] }
 
 sub elems { scalar( @{ $_[0] } ) }
 
+sub flat { $_[0]->flatten }
+
 # delegate to Iterator
 for my $method (qw(map grep each enums pairs tuples)) {
     __PACKAGE__->meta->add_method(
