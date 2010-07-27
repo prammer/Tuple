@@ -2,7 +2,7 @@
 use warnings FATAL => 'all';
 use strict;
 
-use Test::Most tests => 23;
+use Test::Most;
 
 use Tuple;
 
@@ -47,6 +47,20 @@ use Tuple;
     dies_ok { $t1->attrs( [qw(a b c)] ) } 'no attr c';
 
     cmp_ok( $t1->degree, '==', 2, 'degree 2' );
+}
+
+{
+    my $t = Tuple->new( a => 1, b => 2 );
+    my @e = $t->enums->flat;
+    cmp_bag( \@e, [ Enum->new( 'a', 1 ), Enum->new( 'b', 2 ) ] );
+    my @p = $t->pairs->flat;
+    cmp_bag( \@p, [ Pair->new( 'a', 1 ), Pair->new( 'b', 2 ) ] );
+    my @t = $t->tuples->flat;
+    is_deeply( \@t, [$t] );
+    my $em = $t->EnumMap;
+    isa_ok($em, 'EnumMap');
+    my $h = $t->Hash;
+    isa_ok($h, 'Hash');
 }
 
 done_testing;

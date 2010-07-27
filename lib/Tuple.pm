@@ -10,6 +10,12 @@ sub EnumMap {
     return EnumMap->new(%$self);
 }
 
+sub Hash {
+    my $self = shift;
+    require Hash;
+    return Hash->new(%$self);
+}
+
 # delegate to EnumMap
 for my $method (qw(enums pairs map grep each elems)) {
     __PACKAGE__->meta->add_method(
@@ -23,9 +29,8 @@ for my $method (qw(enums pairs map grep each elems)) {
 sub tuples {
     my $self = shift;
     require Array;
-    return Array->new($self)->iterator;
+    return Array->new($self);
 }
-
 
 with qw(Any New);
 

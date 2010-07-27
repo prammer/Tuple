@@ -20,11 +20,6 @@ sub value {
     return ( values( %{ $_[0] } ) )[0];
 }
 
-sub enums {
-    my $self = shift;
-    return $self->Array;
-}
-
 sub Tuple {
     my $self = shift;
     require Tuple;
@@ -94,6 +89,11 @@ sub pairs {
     my $self = shift;
     require Array;
     return Array->new( $self->Pair );
+}
+
+sub enums {
+    my $self = shift;
+    return $self->Array;
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);

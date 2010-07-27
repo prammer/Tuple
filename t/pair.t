@@ -2,7 +2,7 @@
 use warnings FATAL => 'all';
 use strict;
 
-use Test::Most tests => 10;
+use Test::Most;
 
 use Pair;
 
@@ -19,6 +19,20 @@ use Pair;
     throws_ok { $p->key(5) } qr/too many arguments/,   'cannot set key';
     lives_ok { $p->value(5) } 'can set value';
     is($p->value, 5);
+
+    my $e = $p->Enum;
+    isa_ok($e, 'Enum');
+    is($e->key, 'a');
+    is($e->value, '5');
+    my @e = $p->enums->flat;
+    is_deeply( \@e, [ Enum->new( 'a', 5 ) ] );
+
+    my $t = $p->Tuple;
+    isa_ok($t, 'Tuple');
+    is( $t->attr('key'),   'a' );
+    is( $t->attr('value'), '5' );
+    my @t = $e->tuples->flat;
+    is_deeply( \@t, [ Tuple->new( key => 'a', value => 5 ) ] );
 }
 
 done_testing;

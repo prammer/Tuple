@@ -15,6 +15,18 @@ around 'value' => sub {
     return $code->(@_);
 };
 
+sub Enum {
+    my $self = shift;
+    require Enum;
+    return Enum->new( $self->key, $self->value );
+}
+
+sub enums {
+    my $self = shift;
+    require Array;
+    return Array->new( $self->Enum );
+}
+
 sub pairs {
     my $self = shift;
     return $self->Array;
