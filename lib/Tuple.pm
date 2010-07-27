@@ -18,7 +18,7 @@ sub Hash {
 }
 
 # delegate to EnumMap
-for my $method (qw(enums pairs map grep each elems)) {
+for my $method (qw(enums pairs map grep each)) {
     __PACKAGE__->meta->add_method(
         $method => sub {
             my $self = shift;
@@ -35,8 +35,11 @@ sub tuples {
     return Array->new($self);
 }
 
-sub attributes { return keys( %{ $_[0] } ) }
-sub degree     { return scalar( keys( %{ $_[0] } ) ) }
+sub attributes { return CORE::keys( %{ $_[0] } ) }
+use Method::Alias 'keys' => 'attributes';
+
+sub degree     { return scalar( CORE::keys( %{ $_[0] } ) ) }
+use Method::Alias 'elems' => 'degree';
 
 sub attr {
     confess 'wrong number of arguments' if ( @_ != 2 );
@@ -45,7 +48,7 @@ sub attr {
         or confess "not an attribute of this tuple: $a";
     return $self->{$a};
 }
-#use Method::Alias 'at' => 'attr';
+use Method::Alias 'at' => 'attr';
 
 sub attrs {
     my $self = shift;
@@ -57,12 +60,14 @@ sub attrs {
         $self->{$_}
     } @a;
 }
+use Method::Alias 'slice' => 'attrs';
 
 sub has_attr {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $self, $a ) = @_;
     return exists $self->{$a};
 }
+use Method::Alias 'exists' => 'has_attr';
 
 sub projection {
     my $self = shift;
@@ -101,7 +106,7 @@ sub extension {
     my $new_heading = $self->heading;
     my $intersect   = set();
     for my $h (@hrefs) {
-        my $hset = set( keys %$h );
+        my $hset = set( CORE::keys %$h );
         $intersect->insert( $new_heading->intersection($hset) );
         $new_heading->insert($hset);
     }
