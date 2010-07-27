@@ -21,7 +21,7 @@ use Pair;
         isa_ok($t, 'Tuple');
         push @t, $t;
     }
-    @t = sort { $a->attr('key') cmp $b->attr('key') } @t;
+    @t = sort { $a->at('key') cmp $b->at('key') } @t;
     ok( $t[0]->is_identical( Tuple->new( key => 'a', value => 1 ) ) );
     ok( $t[1]->is_identical( Tuple->new( key => 'b', value => 2 ) ) );
 

@@ -30,8 +30,8 @@ use Enum;
 
     my $t = $e->Tuple;
     isa_ok( $t, 'Tuple' );
-    is( $t->attr('key'),   'a' );
-    is( $t->attr('value'), '1' );
+    is( $t->at('key'),   'a' );
+    is( $t->at('value'), '1' );
     my @t = $e->tuples->flat;
     is_deeply( \@t, [ Tuple->new( key => 'a', value => 1 ) ] );
 

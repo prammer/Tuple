@@ -3,6 +3,7 @@ package Tuple::Role;
 use Moose::Role;
 use warnings FATAL => 'all';
 use Set::Object qw(set);
+use Scalar::Util qw(reftype);
 use namespace::autoclean;
 
 sub EnumMap {
@@ -30,44 +31,47 @@ for my $method (qw(enums pairs map grep each)) {
 with qw(Any New);
 
 sub tuples {
-    my $self = shift;
     require Array;
-    return Array->new($self);
+    return Array->new($_[0]);
 }
 
-sub attributes { return CORE::keys( %{ $_[0] } ) }
-use Method::Alias 'keys' => 'attributes';
+sub keys {
+    require Array;
+    return Array->new( CORE::keys( %{ $_[0] } ) );
+}
 
-sub degree     { return scalar( CORE::keys( %{ $_[0] } ) ) }
-use Method::Alias 'elems' => 'degree';
+sub elems { return scalar( CORE::keys( %{ $_[0] } ) ) }
 
-sub attr {
+sub at {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $self, $a ) = @_;
     ( exists $self->{$a} )
         or confess "not an attribute of this tuple: $a";
     return $self->{$a};
 }
-use Method::Alias 'at' => 'attr';
 
-sub attrs {
+sub slice {
     my $self = shift;
-    my @a = ( @_ == 1 && ref($_[0]) eq 'ARRAY') ? @{$_[0]} : @_;
+    my @a
+        = ( @_ == 1 && ( reftype( $_[0] ) || '' ) eq 'ARRAY' )
+        ? @{ $_[0] }
+        : @_;
 
-    return map {
-        ( exists $self->{$_} )
-            or confess "not an attribute of this tuple: $_";
-        $self->{$_}
-    } @a;
+    require Array;
+    return Array->new(
+        map {
+            ( exists $self->{$_} )
+                or confess "not an attribute of this tuple: $_";
+            $self->{$_}
+        } @a
+    );
 }
-use Method::Alias 'slice' => 'attrs';
 
-sub has_attr {
+sub exists {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $self, $a ) = @_;
     return exists $self->{$a};
 }
-use Method::Alias 'exists' => 'has_attr';
 
 sub projection {
     my $self = shift;

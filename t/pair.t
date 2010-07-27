@@ -29,8 +29,8 @@ use Pair;
 
     my $t = $p->Tuple;
     isa_ok($t, 'Tuple');
-    is( $t->attr('key'),   'a' );
-    is( $t->attr('value'), '5' );
+    is( $t->at('key'),   'a' );
+    is( $t->at('value'), '5' );
     my @t = $e->tuples->flat;
     is_deeply( \@t, [ Tuple->new( key => 'a', value => 5 ) ] );
 }

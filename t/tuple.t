@@ -15,11 +15,8 @@ use Tuple;
         $t->is_identical( Tuple->new ),
         'empty is_identical other empty'
     );
-    is_deeply( [ $t->attributes ], [], 'no attributes' );
-    is_deeply( [ $t->keys ], [], 'no keys' );
-    cmp_ok( $t->degree, '==', 0, 'degree 0' );
+    is_deeply( $t->keys, [], 'no keys' );
     cmp_ok( $t->elems, '==', 0, 'elems 0' );
-    ok( !$t->has_attr('a'), 'no has a' );
     ok( !$t->exists('a'), 'no has a' );
 }
 
@@ -31,31 +28,25 @@ use Tuple;
     }
 
     ok( $t1->is_identical($t1), 'is_identical to self' );
-    cmp_bag( [ $t1->keys ], [qw(a b)], 'correct keys' );
+    cmp_bag( [ $t1->keys->flat ], [qw(a b)], 'correct keys' );
 
-    ok( $t1->has_attr('a'),  'has a' );
     ok( $t1->exists('a'),  'has a' );
-    ok( $t1->has_attr('b'),  'has b' );
-    ok( !$t1->has_attr('c'), 'no has c' );
+    ok( $t1->exists('b'),  'has b' );
     ok( !$t1->exists('c'), 'no has c' );
 
-    cmp_ok( $t1->attr('a'), '==', 1, 'attr a' );
-    cmp_ok( $t1->at('a'), '==', 1, 'attr a' );
-    cmp_ok( $t1->attr('b'), '==', 2, 'attr b' );
-    dies_ok { $t1->attr('c') } 'no attr c';
-    dies_ok { $t1->at('c') } 'no attr c';
-    dies_ok { $t1->attr() } 'must pass someting to attr()';
+    cmp_ok( $t1->at('a'), '==', 1, 'at a' );
+    cmp_ok( $t1->at('b'), '==', 2, 'at b' );
+    dies_ok { $t1->at('c') } 'no at c';
+    dies_ok { $t1->at() } 'must pass someting to at()';
 
-    is_deeply( [ $t1->attrs(qw(a b)) ], [ 1, 2 ], 'attr array' );
-    is_deeply( [ $t1->slice(qw(a b)) ], [ 1, 2 ], 'attr array' );
-    is_deeply( [ $t1->attrs(qw(b a)) ], [ 2, 1 ], 'attr array' );
-    is_deeply( [ $t1->attrs( [qw(a b)] ) ], [ 1, 2 ], 'attr array' );
-    is_deeply( [ $t1->attrs( [qw(b a)] ) ], [ 2, 1 ], 'attr array' );
-    is_deeply( [ $t1->slice( [qw(b a)] ) ], [ 2, 1 ], 'attr array' );
-    dies_ok { $t1->attrs(qw(a b c)) } 'no attr c';
-    dies_ok { $t1->attrs( [qw(a b c)] ) } 'no attr c';
+    is_deeply( $t1->slice(qw(a b)), [ 1, 2 ], 'slice array' );
+    is_deeply( $t1->slice(qw(b a)), [ 2, 1 ], 'slice array' );
+    is_deeply( $t1->slice( [qw(a b)] ), [ 1, 2 ], 'slice array' );
+    is_deeply( $t1->slice( [qw(b a)] ), [ 2, 1 ], 'slice array' );
+    is_deeply( $t1->slice( [qw(b a)] ), [ 2, 1 ], 'slice array' );
+    dies_ok { $t1->slice(qw(a b c)) } 'no slice c';
+    dies_ok { $t1->slice( [qw(a b c)] ) } 'no slice c';
 
-    cmp_ok( $t1->degree, '==', 2, 'degree 2' );
     cmp_ok( $t1->elems, '==', 2, 'elems 2' );
 }
 
