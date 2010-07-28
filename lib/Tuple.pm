@@ -120,9 +120,7 @@ sub extension {
     return $self->new( map { %$_ } @hrefs );
 }
 
-# flatten
-# Hash ?
-# HashRef ?
+sub flat { %{ $_[0] } }
 
 
 package Tuple;

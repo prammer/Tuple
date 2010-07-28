@@ -30,6 +30,8 @@ use Tuple;
     ok( $t1->is_identical($t1), 'is_identical to self' );
     cmp_bag( [ $t1->keys->flat ], [qw(a b)], 'correct keys' );
 
+    is_deeply( [ sort $t1->flat ], [ 1, 2, 'a', 'b' ], 'flat' );
+
     ok( $t1->exists('a'),  'has a' );
     ok( $t1->exists('b'),  'has b' );
     ok( !$t1->exists('c'), 'no has c' );
