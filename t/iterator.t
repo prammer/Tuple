@@ -98,11 +98,11 @@ sub common {
         is_deeply( $filtered, ['c'], 'simple grep' );
     }
 
-    # flatten
+    # flat
     {
         my $i = $make_new{$class}->( [qw(a b c)] ) or die;
-        my @a = $i->flatten;
-        is_deeply( \@a, [qw(a b c)], 'flatten' );
+        my @a = $i->flat;
+        is_deeply( \@a, [qw(a b c)], 'flat' );
     }
 
     # each

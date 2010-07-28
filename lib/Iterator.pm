@@ -13,19 +13,18 @@ with(
 sub eager {
     my $self = shift;
     require Array;
-    my @a;
+    my $a = Array->new;
     while ( $self->has_next ) {
         my $item = $self->next;
-        push @a, $item;
+        push @$a, $item;
     }
-    return Array->new(@a);
+    return $a;
 }
 
-sub flatten {
+sub flat {
     my $self = shift;
     return $self->eager->flatten;
 }
-use Method::Alias 'flat' => 'flatten';
 
 sub map {
     my ( $self, $code ) = @_;
