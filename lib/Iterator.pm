@@ -23,7 +23,7 @@ sub eager {
 
 sub flat {
     my $self = shift;
-    return $self->eager->flatten;
+    return $self->eager->flat;
 }
 
 sub map {

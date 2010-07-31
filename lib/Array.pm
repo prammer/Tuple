@@ -5,34 +5,18 @@ package Array::Role;
 
 use Moose::Role;
 use warnings FATAL => 'all';
+use Seq;
 use namespace::autoclean;
 
-sub iterator {
+sub Seq {
     my $self = shift;
-    require Iterator::Array;
-    return Iterator::Array->new(@$self);
-}
-
-sub eager { $_[0] }
-
-sub elems { scalar( @{ $_[0] } ) }
-
-sub flat { $_[0]->flatten }
-
-# delegate to Iterator
-for my $method (qw(map grep each enums pairs tuples)) {
-    __PACKAGE__->meta->add_method(
-        $method => sub {
-            my $self = shift;
-            return $self->iterator->$method(@_);
-        }
-    );
+    require Seq;
+    return Seq->new(@$self);
 }
 
 with (
-    'BlessedArray',
-    'Any',
-    'Moose::Autobox::Array' => { excludes =>[qw(each grep map)], },
+    'Seq::Role',
+    'Moose::Autobox::Array' => { excludes =>[qw(each grep map at exists first head join keys kv last reverse slice sort tail values)], },
 );
 
 

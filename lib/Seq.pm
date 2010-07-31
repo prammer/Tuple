@@ -5,68 +5,79 @@ use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
 
+# delegate to Iterator
+for my $method (qw(map grep each enums pairs tuples)) {
+    __PACKAGE__->meta->add_method(
+        $method => sub {
+            my $self = shift;
+            return $self->iterator->$method(@_);
+        }
+    );
+}
+
+with (
+    'Any',
+    'BlessedArray',
+);
+
 sub iterator {
     my $self = shift;
-    require Tuple;
-    require Iterator::Code;
-    my $a = [@$self];
-    my $i = -1;
-    return Iterator::Code->new(sub {
-        return if (@$a == 0);
-        $i++;
-        return Tuple->new( key => $i, value => shift @$a, );
-    });
+    require Iterator::Array;
+    return Iterator::Array->new(@$self);
 }
 
-sub enums {
-    my $self = shift;
-    require Enum;
-    my $i = 0;
-    return $self->map( sub { Enum->new( $i++ => $_ ) } );
-}
-
-sub pairs {
-    my $self = shift;
-    require Pair;
-    my $i = 0;
-    return $self->map( sub { Pair->new( $i++ => $_ ) } );
-}
-
-sub tuples {
-    my $self = shift;
-    require Tuple;
-    my $i = 0;
-    return $self->map( sub { Tuple->new( key => $i++, value => $_ ) } );
-}
-
-sub elems { scalar( @{ $_[0] } ) }
-
-sub degree {2}
-use Method::Alias 'cardnality' => 'elems';
-
-# this is not right.  Seq will have to mean something different
-# from Array and/or Iterator at some point
 sub Array {
     my $self = shift;
     require Array;
     return Array->new(@$self);
 }
 
-# delegate to Array
-for my $method (qw(map grep each)) {
-    __PACKAGE__->meta->add_method(
-        $method => sub {
-            my $self = shift;
-            return $self->Array->$method(@_);
-        }
-    );
+sub eager { $_[0] }
+sub elems { scalar( @{ $_[0] } ) }
+sub flat  { @{ $_[0] } }
+sub kv    { @{ $_[0] } }
+sub slice { $_[0]->new( @{ $_[0] }[ @{ $_[1] } ] ) }
+sub head  { $_[0]->[0] }
+sub tail  { $_[0]->new( @{ $_[0] }[ 1 .. $#{ $_[0] } ] ) }
+sub first { $_[0]->[0]; }
+sub last  { $_[0]->[ $#{ $_[0] } ]; }
+
+sub join {
+    my ( $self, $sep ) = @_;
+    $sep ||= '';
+    CORE::join $sep, @$self;
 }
 
-with (
-#    'Moose::Autobox::Array',
-    'Any',
-    'BlessedArray',
-);
+sub reverse {
+    my ($self) = @_;
+    $self->new( CORE::reverse @$self );
+}
+
+sub sort {
+    my ( $self, $sub ) = @_;
+    $sub ||= sub { $a cmp $b };
+    $self->new( CORE::sort { $sub->( $a, $b ) } @$self );
+}
+
+sub at {
+    my ( $self, $index ) = @_;
+    $self->[$index];
+}
+
+sub exists {
+    my ( $self, $index ) = @_;
+    CORE::exists $self->[$index];
+}
+
+sub keys {
+    my ($self) = @_;
+    $self->new( 0 .. $#{$self} );
+}
+
+sub values {
+    my ($self) = @_;
+    $self->new(@$self);
+}
 
 
 package Seq;
@@ -76,13 +87,6 @@ use MooseX::Identity qw(is_identical);
 use namespace::autoclean;
 
 with 'Seq::Role';
-
-#sub push    { confess 'cannot modify' }
-#sub pop     { confess 'cannot modify' }
-#sub shift   { confess 'cannot modify' }
-#sub unshift { confess 'cannot modify' }
-#sub delete  { confess 'cannot modify' }
-#sub put     { confess 'cannot modify' }
 
 sub _is_identical_value {
     confess 'wrong number of arguments' if ( @_ != 2 );
@@ -94,8 +98,6 @@ sub _is_identical_value {
     }
     return 1;
 }
-
-#sub WHICH { return $_[0] }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 1;
