@@ -113,13 +113,7 @@ sub exists {
 sub projection {
     my $self = shift;
 
-    return $self->new(
-        map {
-            ( exists $self->{$_} )
-                or confess "not an attribute of this tuple: $_";
-            $_ => $self->{$_}
-        } @_
-    );
+    return $self->new( map { $_ => $self->at($_) } @_ );
 }
 
 sub heading {
