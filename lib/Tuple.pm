@@ -101,13 +101,7 @@ sub slice {
         : @_;
 
     require Array;
-    return Array->new(
-        map {
-            ( exists $self->{$_} )
-                or confess "not an attribute of this tuple: $_";
-            $self->{$_}
-        } @a
-    );
+    return Array->new( map { $self->at($_) } @a );
 }
 
 sub exists {

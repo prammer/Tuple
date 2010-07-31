@@ -21,6 +21,12 @@ sub test_does {
     isa_ok( $e, $class );
     does_ok( $e, 'EnumMap::Role' );
     ok( !defined $e->at('c'), 'no key returns undef' );
+    my $s = $e->slice(qw(a c b));
+    is_deeply(
+        $s,
+        [ 1, undef, 2 ],
+        'can slice a key that does not exist'
+    );
 }
 
 1;

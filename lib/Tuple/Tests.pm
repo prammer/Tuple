@@ -58,8 +58,6 @@ sub test_does {
         is_deeply( $t1->slice( [qw(a b)] ), [ 1, 2 ], 'slice array' );
         is_deeply( $t1->slice( [qw(b a)] ), [ 2, 1 ], 'slice array' );
         is_deeply( $t1->slice( [qw(b a)] ), [ 2, 1 ], 'slice array' );
-        dies_ok { $t1->slice(qw(a b c)) } 'no slice c';
-        dies_ok { $t1->slice( [qw(a b c)] ) } 'no slice c';
 
         cmp_ok( $t1->elems, '==', 2, 'elems 2' );
     }
@@ -84,6 +82,8 @@ sub test_no_key_fail {
 
     my $t = $class->new( a => 1, b => 2 );
     dies_ok { $t->at('c') } 'no at c';
+    dies_ok { $t->slice(qw(a b c)) } 'no slice c';
+    dies_ok { $t->slice( [qw(a b c)] ) } 'no slice c';
 }
 
 1;
