@@ -9,6 +9,10 @@ with (
     'EnumMap::Role',
 );
 
+sub put {
+    my ($hash, $key, $value) = @_;
+    $hash->{$key} = $value;
+}
 
 package Hash;
 

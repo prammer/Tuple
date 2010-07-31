@@ -7,6 +7,23 @@ use strict;
 use Test::Most;
 use Test::Moose;
 
+sub test_identity {
+    my $class = shift or die;
+
+    use_ok($class);
+
+    my $t = $class->new;
+    ok( $t->is_identical( $class->new ),
+        'empty is_identical other empty' );
+
+    {
+        my $t1 = $class->new( a => 1, b => 2 );
+        {
+            my $t2 = $class->new( { a => 1, b => 2 } );
+            ok( $t1->is_identical($t2), 'constructor hash vs ref' );
+        }
+    }
+}
 
 sub test_does {
     my $class = shift or die;
@@ -19,23 +36,10 @@ sub test_does {
         isa_ok( $t, $class );
         does_ok( $t, 'Tuple::Role' );
         ok( $t->is_identical($t), 'empty is_identical to itself' );
-        ok(
-            $t->is_identical( $class->new ),
-            'empty is_identical other empty'
-        );
         is_deeply( $t->keys, [], 'no keys' );
         cmp_ok( $t->elems, '==', 0, 'elems 0' );
         ok( !$t->exists('a'), 'no has a' );
     }
-
-    {
-        my $t1 = $class->new( a => 1, b => 2 );
-        {
-            my $t2 = $class->new( { a => 1, b => 2 } );
-            ok( $t1->is_identical($t2), 'constructor hash vs ref' );
-        }
-    }
-
 
     {
         my $t1 = $class->new( a => 1, b => 2 );
@@ -60,6 +64,8 @@ sub test_does {
         is_deeply( $t1->slice( [qw(b a)] ), [ 2, 1 ], 'slice array' );
 
         cmp_ok( $t1->elems, '==', 2, 'elems 2' );
+
+        cmp_bag( [ $t1->values->flat ], [ 1, 2 ], 'values' );
     }
 
     {

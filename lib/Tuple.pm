@@ -68,6 +68,11 @@ sub keys {
     return Array->new( CORE::keys( %{ $_[0] } ) );
 }
 
+sub values {
+    require Array;
+    return Array->new( CORE::values( %{ $_[0] } ) );
+}
+
 # delegate to pairs
 for my $method (qw(map grep each)) {
     __PACKAGE__->meta->add_method(
@@ -107,7 +112,7 @@ sub slice {
 sub exists {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $self, $a ) = @_;
-    return exists $self->{$a};
+    return CORE::exists $self->{$a};
 }
 
 sub projection {
