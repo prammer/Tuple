@@ -41,7 +41,6 @@ sub grep {
 # it implies eagerness I guess.  dunno what else makes sense
 sub each {
     my ( $self, $sub ) = @_;
-    my $map = $self->map($sub);
     while ( $self->has_next ) {
         local $_ = $self->next;
         $sub->($_);
