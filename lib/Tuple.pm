@@ -73,21 +73,6 @@ sub values {
     return Array->new( CORE::values( %{ $_[0] } ) );
 }
 
-# delegate to pairs
-for my $method (qw(map grep each)) {
-    __PACKAGE__->meta->add_method(
-        $method => sub {
-            my $self = shift;
-            return $self->pairs->$method(@_);
-        }
-    );
-}
-
-with (
-    'Any',
-    'New',
-);
-
 sub elems { return scalar( CORE::keys( %{ $_[0] } ) ) }
 
 sub at {
