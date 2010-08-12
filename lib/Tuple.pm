@@ -91,7 +91,7 @@ sub slice {
         : @_;
 
     require Array;
-    return Array->new( map { $self->at($_) } @a );
+    return Array->new( CORE::map { $self->at($_) } @a );
 }
 
 sub exists {
@@ -103,7 +103,7 @@ sub exists {
 sub projection {
     my $self = shift;
 
-    return $self->new( map { $_ => $self->at($_) } @_ );
+    return $self->new( CORE::map { $_ => $self->at($_) } @_ );
 }
 
 sub heading {
@@ -119,7 +119,7 @@ sub extension {
     return $self if @_ == 0;
     my @hrefs = $self->_components;
     if ( ref( $_[0] ) ) {
-        push @hrefs, map { blessed($_) ? $_->_components : $_ } @_;
+        push @hrefs, CORE::map { blessed($_) ? $_->_components : $_ } @_;
     }
     elsif ( @_ == 1 ) {
         confess 'bad args';
@@ -138,11 +138,13 @@ sub extension {
     if ( $intersect->size > 0 ) {
         confess "not disjoint on: " . join( ', ', $intersect->members );
     }
-    return $self->new( map { %$_ } @hrefs );
+    return $self->new( CORE::map { %$_ } @hrefs );
 }
 
 sub flat { %{ $_[0] } }
-sub kv { %{ $_[0] } }
+sub kv {
+    $_[0]->map( sub { $_->key, $_->value } );
+}
 sub eager { $_[0] }
 sub reverse {
     my ($self) = @_;

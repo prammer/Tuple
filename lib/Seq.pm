@@ -35,7 +35,9 @@ sub Array {
 sub eager { $_[0] }
 sub elems { scalar( @{ $_[0] } ) }
 sub flat  { @{ $_[0] } }
-sub kv    { @{ $_[0] } }
+sub kv {
+    $_[0]->map( sub { $_->key, $_->value } );
+}
 sub slice { $_[0]->new( @{ $_[0] }[ @{ $_[1] } ] ) }
 sub head  { $_[0]->[0] }
 sub tail  { $_[0]->new( @{ $_[0] }[ 1 .. $#{ $_[0] } ] ) }
