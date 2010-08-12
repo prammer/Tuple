@@ -4,6 +4,7 @@ package Enum::Role;
 use Moose::Role;
 use warnings FATAL => 'all';
 use namespace::autoclean;
+
 override 'BUILDARGS' => sub {
     my $class = shift;
     confess 'expecting 2 values but got ' . scalar(@_) if ( @_ != 2 );
@@ -19,6 +20,8 @@ sub value {
     confess 'too many arguments' if @_ > 1;
     return ( values( %{ $_[0] } ) )[0];
 }
+
+use Method::Alias 'k' => 'key', 'v' => 'value',;
 
 sub Tuple {
     my $self = shift;
