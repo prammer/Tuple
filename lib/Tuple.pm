@@ -142,6 +142,12 @@ sub extension {
 }
 
 sub flat { %{ $_[0] } }
+sub kv { %{ $_[0] } }
+sub eager { $_[0] }
+sub reverse {
+    my ($self) = @_;
+    return $self->new( CORE::reverse %$self );
+}
 
 
 package Tuple;
