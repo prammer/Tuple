@@ -151,6 +151,9 @@ sub reverse {
     return $self->new( CORE::reverse %$self );
 }
 
+# TODO: http://search.cpan.org/dist/Muldis-D/lib/Muldis/D/Core/Tuple.pod
+# rename wrap unwrap update_*?? product
+
 
 package Tuple;
 use Moose;
