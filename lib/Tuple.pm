@@ -165,6 +165,13 @@ with (
     'Tuple::Role',
 );
 
+around 'new' => sub {
+    my $code = shift;
+    my $self = $code->(@_);
+    tie %$self, 'Tuple::Tie', %$self;
+    return $self;
+};
+
 sub _is_identical_value {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $e1, $e2 ) = @_;
@@ -178,6 +185,35 @@ sub _is_identical_value {
 }
 
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
+
+
+package Tuple::Tie;
+
+use warnings FATAL => 'all';
+use strict;
+
+require Tie::Hash;
+our @ISA = ('Tie::StdHash');
+
+use Carp qw(cluck confess);
+
+sub TIEHASH {
+    my $class = shift;
+    my $tied = {@_};
+    bless $tied, $class;
+}
+sub STORE { confess 'cannot assign value, Tuple is immutable' }
+sub DELETE { confess 'cannot delete, Tuple is immutable' }
+sub CLEAR { confess 'cannot clear, Tuple is immutable' }
+
+sub FETCH {
+    my ( $tied, $a ) = @_;
+    ( exists $tied->{$a} )
+        or confess "not an attribute of this tuple: $a";
+    return $tied->{$a};
+
+}
+
 1;
 __END__
 

@@ -92,6 +92,20 @@ sub test_no_key_fail {
     dies_ok { $t->slice( [qw(a b c)] ) } 'no slice c';
 }
 
+sub test_tie {
+    my $class = shift or die;
+    my $t = $class->new( a => 1, b => 2 );
+    is( $t->{'a'}, 1, 'access as hash' );
+    is( $t->{'b'}, 2, 'access as hash' );
+    dies_ok { $t->{'c'} } 'no key throws as hash';
+    dies_ok { delete $t->{'a'} } 'delete throws as hash';
+    dies_ok { $t->{'a'} = 5 } 'assign throws as hash';
+    dies_ok { $t->{'c'} = 5 } 'assign throws as hash';
+    dies_ok { %$t = (); } 'clear throws as hash';
+    dies_ok { @{$t}{qw(a b)} = (4, 5) } 'assign slice throws as hash';
+    my @v = @{$t}{qw(a b)}
+}
+
 1;
 __END__
 
