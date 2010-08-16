@@ -102,8 +102,9 @@ sub test_tie {
     dies_ok { $t->{'a'} = 5 } 'assign throws as hash';
     dies_ok { $t->{'c'} = 5 } 'assign throws as hash';
     dies_ok { %$t = (); } 'clear throws as hash';
-    dies_ok { @{$t}{qw(a b)} = (4, 5) } 'assign slice throws as hash';
-    my @v = @{$t}{qw(a b)}
+    dies_ok { @{$t}{qw(a b)} = ( 4, 5 ) } 'assign slice throws as hash';
+    my @v = @{$t}{qw(a b)};
+    is_deeply( \@v, [qw(1 2)] );
 }
 
 1;
