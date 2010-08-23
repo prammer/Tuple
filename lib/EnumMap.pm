@@ -7,7 +7,7 @@ use namespace::autoclean;
 
 with(
 # TODO: is this a bug in Moose?
-    'Tuple::Role' => { excludes => [qw(tuples at)] },
+    'Tuple::Role' => { -excludes => [qw(tuples at)] },
 #    'Tuple::Role',
 );
 

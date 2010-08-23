@@ -16,7 +16,7 @@ sub Seq {
 
 with (
     'Seq::Role',
-    'Moose::Autobox::Array' => { excludes =>[qw(each grep map at exists first head join keys kv last reverse slice sort tail values)], },
+    'Moose::Autobox::Array' => { -excludes =>[qw(each grep map at exists first head join keys kv last reverse slice sort tail values)], },
 );
 
 
