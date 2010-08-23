@@ -198,19 +198,18 @@ use Carp qw(cluck confess);
 
 sub TIEHASH {
     my $class = shift;
-    my $tied = {@_};
+    my $tied  = {@_};
     bless $tied, $class;
 }
-sub STORE { confess 'cannot assign value, Tuple is immutable' }
+sub STORE  { confess 'cannot assign value, Tuple is immutable' }
 sub DELETE { confess 'cannot delete, Tuple is immutable' }
-sub CLEAR { confess 'cannot clear, Tuple is immutable' }
+sub CLEAR  { confess 'cannot clear, Tuple is immutable' }
 
 sub FETCH {
     my ( $tied, $a ) = @_;
     ( exists $tied->{$a} )
         or confess "not an attribute of this tuple: $a";
     return $tied->{$a};
-
 }
 
 1;
