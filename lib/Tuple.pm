@@ -165,11 +165,10 @@ with (
     'Tuple::Role',
 );
 
-around 'new' => sub {
-    my $code = shift;
-    my $self = $code->(@_);
-    tie %$self, 'Tuple::Tie', %$self;
-    return $self;
+override 'BUILDARGS' => sub {
+    my $to_be_self = {};
+    tie %$to_be_self, 'Tuple::Tie', %{ super() };
+    return $to_be_self;
 };
 
 sub _is_identical_value {
