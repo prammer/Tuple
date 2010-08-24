@@ -167,7 +167,7 @@ with (
 
 override 'BUILDARGS' => sub {
     my $to_be_self = {};
-    tie %$to_be_self, 'Tuple::Tie', %{ super() };
+    tie %$to_be_self, 'Tuple::Tie', super();
     return $to_be_self;
 };
 
@@ -197,9 +197,7 @@ our @ISA = ('Tie::StdHash');
 use Carp qw(cluck confess);
 
 sub TIEHASH {
-    my $class = shift;
-    my $tied  = {@_};
-    bless $tied, $class;
+    bless $_[1], $_[0];
 }
 sub STORE  { confess 'cannot assign value, Tuple is immutable' }
 sub DELETE { confess 'cannot delete, Tuple is immutable' }
