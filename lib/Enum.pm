@@ -16,9 +16,21 @@ sub key {
     return ( keys( %{ $_[0] } ) )[0];
 }
 
+sub keys {
+    my $self = shift;
+    require Array;
+    return Array->new($self->key);
+}
+
 sub value {
     confess 'too many arguments' if @_ > 1;
     return ( values( %{ $_[0] } ) )[0];
+}
+
+sub values {
+    my $self = shift;
+    require Array;
+    return Array->new($self->value);
 }
 
 use Method::Alias 'k' => 'key', 'v' => 'value',;
@@ -41,6 +53,11 @@ sub Array {
     my $self = shift;
     require Array;
     return Array->new($self);
+}
+
+sub invert {
+    my $self = shift;
+    return $self->new( $self->value, $self->key );
 }
 
 # delegate to Array
