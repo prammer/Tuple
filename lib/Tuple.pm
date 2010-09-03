@@ -165,6 +165,9 @@ with (
     'Tuple::Role',
 );
 
+# thought about getting rid of tie by using
+# Const::Fast, but we need FETCH to throw
+# on keys that do not exist
 override 'BUILDARGS' => sub {
     my $to_be_self = {};
     tie %$to_be_self, 'Tuple::Tie', super();
