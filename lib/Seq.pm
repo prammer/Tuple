@@ -1,4 +1,6 @@
 
+# a fully reified Perl 5 array -- no iterators or lazyness -- immutable
+
 package Seq::Role;
 
 use Moose::Role;

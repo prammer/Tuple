@@ -1,5 +1,5 @@
 
-# a fully reified Perl 5 array -- no iterators or lazyness
+# a fully reified Perl 5 array -- no iterators or lazyness -- mutable
 
 package Array::Role;
 
