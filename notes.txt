@@ -1,2 +1,6 @@
 
 http://search.cpan.org/dist/Muldis-D/lib/Muldis/D/Basics.pod
+
+which operators are primitive?
+from DB in Depth: One possible primitive set (not the only one) is that
+consisting of restrict, project, join, union, and semidifference
