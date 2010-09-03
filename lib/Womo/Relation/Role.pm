@@ -9,7 +9,7 @@ use Womo::Depot::Interface;
 
 #requires '_build_sql';
 
-sub heading;    # FIXME
+sub heading {}  # FIXME
 has 'heading' => (
     is       => 'ro',
     isa      => 'ArrayRef[Str]',
