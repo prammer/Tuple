@@ -9,6 +9,7 @@ use Womo::Relation::Iterator::STH;
 use Womo::Relation::Iterator::CodeRef;
 use Set::Object qw(set);
 use SQL::Abstract;
+use Womo::ASTNode;
 
 # TODO: the structure of this is very SQL specific
 # "table_name, column_name" vs "relvar_name, attribute_name" etc
@@ -86,13 +87,13 @@ sub new_iterator {
     my $self = shift;
     my $ast = shift or confess 'must pass ast';
 
-    if (   $ast->{type} eq 'operator'
-        && $ast->{op} eq 'restriction'
-        && ref( $ast->{args}->[1] ) eq 'CODE' )
+    if (   $ast->type eq 'operator'
+        && $ast->op eq 'restriction'
+        && ref( $ast->args->[1] ) eq 'CODE' )
     {
 
-        my $want      = $ast->{args}->[1];
-        my $parent_it = $self->new_iterator( $ast->{args}->[0] );
+        my $want      = $ast->args->[1];
+        my $parent_it = $self->new_iterator( $ast->args->[0] );
         return Womo::Relation::Iterator::CodeRef->new(
 
 #            relation => $self,
@@ -113,6 +114,23 @@ sub new_iterator {
     );
 }
 
+sub _ast_can_full_sql {
+    my $ast = shift or die;
+    for my $sub ( _sub_ast($ast) ) {
+        return 0 if !_ast_can_full_sql($sub);
+    }
+    return 0
+        if ( $ast->type eq 'operator'
+        && $ast->op eq 'restriction'
+        && ref( $ast->args->[1] ) eq 'CODE' );
+    return 1;
+}
+
+sub _sub_ast {
+    my $ast = shift or die;
+    grep { blessed($_) && blessed($_) eq 'Womo::ASTNode' } @{ $ast->args };
+}
+
 sub _new_sql {
     my $self = shift;
     return Womo::SQL->new(@_);
@@ -122,11 +140,11 @@ sub _build_sql {
     my $self = shift;
     my $ast = $_[0];
 
-    if ($ast->{type} eq 'table') {
+    if ($ast->type eq 'table') {
         return $self->_build_sql_table(@_);
     }
-    elsif ($ast->{type} eq 'operator') {
-        my $method = '_build_sql_' . $ast->{op};
+    elsif ($ast->type eq 'operator') {
+        my $method = '_build_sql_' . $ast->op;
         return $self->$method(@_);
     }
     else {
@@ -152,6 +170,7 @@ sub _build_sql_restriction {
     my ( $self, $ast, $next_label ) = @_;
 
     my $sql = SQL::Abstract->new;
+$DB::single = 1;
     my ( $stmt, @bind ) = $sql->where( $ast->{args}->[1] );
     my @table;
     if ( $ast->{args}->[0]->{type} eq 'table' ) {

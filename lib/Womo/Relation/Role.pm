@@ -6,6 +6,7 @@ use Set::Object qw(set);
 use Moose::Util qw(does_role);
 use Womo::SQL;
 use Womo::Depot::Interface;
+use Womo::ASTNode;
 
 #requires '_build_sql';
 
@@ -24,8 +25,9 @@ has 'heading' => (
 has '_ast' => (
     init_arg => 'ast',
     is       => 'ro',
-    isa      => 'HashRef',
+    isa      => 'Womo::ASTNode',
     required => 1,
+    coerce   => 1,
 );
 
 has '_depot' => (
@@ -36,11 +38,6 @@ has '_depot' => (
 #    handles  => { '_db_conn' => 'db_conn' },
 );
 
-
-sub _new_sql {
-    my $self = shift;
-    return Womo::SQL->new(@_);
-}
 
 sub _new_iterator {
     my $self = shift;
