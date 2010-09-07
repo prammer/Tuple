@@ -87,30 +87,62 @@ sub new_iterator {
     my $self = shift;
     my $ast = shift or confess 'must pass ast';
 
-    if (   $ast->type eq 'operator'
-        && $ast->op eq 'restriction'
-        && ref( $ast->args->[1] ) eq 'CODE' )
-    {
-
-        my $want      = $ast->args->[1];
-        my $parent_it = $self->new_iterator( $ast->args->[0] );
-        return Womo::Relation::Iterator::CodeRef->new(
-
-#            relation => $self,
-            code => sub {
-                while (1) {
-                    my $next = $parent_it->next or return;
-                    local $_ = $next;
-                    return $next if $want->($next);
-                }
-            }
-        );
+    if ( _ast_can_full_sql($ast) ) {
+        return Womo::Relation::Iterator::STH->new(
+            sth => $self->_new_sth($ast), );
     }
 
-    return Womo::Relation::Iterator::STH->new(
+    if ( $ast->type eq 'operator' ) {
+        return $self->_new_iterator_op($ast);
+    }
 
-#        relation => $self,
-        sth => $self->_new_sth($ast),
+    die "not implemented";
+}
+
+sub _new_iterator_op {
+    my $self = shift;
+    my $ast  = $_[0];
+
+    my $method = '_new_iterator_' . $ast->op;
+    if ( !$self->can($method) ) {
+#        $DB::single = 1;
+        die "not implemented " . $ast->op;
+    }
+    return $self->$method(@_);
+}
+
+sub _new_iterator_restriction {
+    my ( $self, $ast ) = @_;
+
+    my $parent_it = $self->new_iterator( $ast->args->[0] );
+    my $want      = $ast->args->[1];
+    return Womo::Relation::Iterator::CodeRef->new(
+
+        code => sub {
+            while (1) {
+                my $next = $parent_it->next or return;
+                local $_ = $next;
+                return $next if $want->($next);
+            }
+        }
+    );
+}
+
+sub _new_iterator_projection {
+    my ( $self, $ast ) = @_;
+
+    my $parent_it = $self->new_iterator( $ast->args->[0] );
+    my @attr      = @{ $ast->args->[1] };
+    return Womo::Relation::Iterator::CodeRef->new(
+
+        code => sub {
+            while (1) {
+                my $next = $parent_it->next or return;
+                my %new;
+                @new{@attr} = @$next{@attr};
+                return \%new;
+            }
+        }
     );
 }
 
@@ -170,7 +202,6 @@ sub _build_sql_restriction {
     my ( $self, $ast, $next_label ) = @_;
 
     my $sql = SQL::Abstract->new;
-$DB::single = 1;
     my ( $stmt, @bind ) = $sql->where( $ast->{args}->[1] );
     my @table;
     if ( $ast->{args}->[0]->{type} eq 'table' ) {
