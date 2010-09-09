@@ -1,4 +1,15 @@
 
+migrate to Iterator instead of Womo::Iterator
+expunge Set::Relation (too much noise, want to diverge interface)
+mv t/01.t and t/restriction_sqla.t to lib/*/Relation/*/Test.pm
+make Relation be of Tuple instead of HashRef
+change Relation interface to have ->grep ->[h]slice? 
+    - restrict -> grep
+    - project  -> some kind of slice?
+    - join     -> join (fights with Array->join ?)
+    - union    -> union
+    - semidifference -> semidifference
+
 - left outer join
 - group by
 - functions: sum(), count(), max(), etc...
