@@ -1,12 +1,12 @@
 
 package Womo::Relation::Role;
 use Womo::Role;
-use Set::Relation::V2;
 use Set::Object qw(set);
 use Moose::Util qw(does_role);
-use Womo::SQL;
 use Womo::Depot::Interface;
 use Womo::ASTNode;
+
+with 'Any';
 
 #requires '_build_sql';
 
@@ -66,6 +66,7 @@ sub _new_sth {
     return $sth;
 }
 
+# call this ->eager ?
 sub members {
     my $self = shift;
 
@@ -75,6 +76,12 @@ sub members {
         push @all, $row;
     }
     return \@all;
+}
+
+sub Seq {
+    my $self = shift;
+    require Seq;
+    Seq->new( $self->members );
 }
 
 sub _new_relation {
@@ -162,21 +169,10 @@ sub restriction {
     );
 }
 
-sub _as_v2 {
-    my $self = shift;
-    return Set::Relation::V2->new( $self->members );
-}
-
-sub is_identical {
-    my ( $self, $other ) = @_;
-    return 1 if ( $self == $other );
-    return $self->_as_v2->is_identical(
-        Set::Relation::V2->new( $other->members ) );
-}
-
 sub cardinality {
     my $self = shift;
 
+    return $self->Seq->elems;
     # TODO: select count(*) ... ??
     return $self->_as_v2->cardinality;
 }
@@ -278,63 +274,6 @@ sub _array_arg_ensure_same_headings {
     $self->_ensure_same_headings($_) for (@$others);
     return $others;
 }
-
-sub insertion {
-    my $self = shift;
-
-    # TODO: make this lazy?
-    return $self->_as_v2->insertion(@_);
-}
-
-# TODO: meh, ->new on what?
-sub export_for_new {
-    my $self = shift;
-    return $self->_as_v2->export_for_new(@_);
-}
-
-# TODO: to satisfy Set::Relation
-{
-    my $meta   = __PACKAGE__->meta;
-    my @method = (
-        'antijoin',               'attr',
-        'attr_names',             'body',
-        'cardinality_per_group',  'classification',
-        'cmpl_group',             'cmpl_proj',
-        'cmpl_restr',             'cmpl_wrap',
-        'composition',            'count',
-        'count_per_group',        'degree',
-        'deletion',               'diff',
-        'empty',                  'exclusion',
-        'extension',              'group',
-        'has_attrs',              'has_key',
-        'has_member',             'is_disjoint',
-        'is_empty',               'is_nullary',
-        'is_proper_subset',       'is_proper_superset',
-        'is_subset',              'is_superset',
-        'join_with_group',        'keys',
-        'limit',                  'limit_by_attr_names',
-        'map',                    'outer_join_with_exten',
-        'outer_join_with_group',  'outer_join_with_static_exten',
-        'outer_join_with_undefs', 'product',
-        'quotient',               'rank',
-        'rank_by_attr_names',     'restr_and_cmpl',
-        'semidiff',               'semijoin',
-        'semijoin_and_diff',      'slice',
-        'static_exten',           'static_subst',
-        'static_subst_in_restr',  'static_subst_in_semijoin',
-        'subst_in_restr',         'subst_in_semijoin',
-        'substitution',           'summary',
-        'symmetric_diff',         'tclose',
-        'ungroup',                'unwrap',
-        'which',                  'wrap'
-    );
-    for my $method (@method) {
-        $meta->add_method(
-            $method => sub { die "$method not implemented yet" } );
-    }
-}
-
-with 'Set::Relation';
 
 1;
 __END__
