@@ -1,7 +1,10 @@
 
+#TODO: use Data::Stream::Bulk instead
+
 package Womo::Relation::Iterator::STH;
 
 use Womo::Class;
+use Tuple;
 
 with 'Womo::Relation::Iterator';
 
@@ -18,7 +21,7 @@ sub next {
 
     my $sth = $self->_sth or return;
     if ( $sth->{Active} and my $row = $sth->fetchrow_hashref() ) {
-        return $row;
+        return Tuple->new($row);
     }
     $sth->finish;
     $self->_clear_sth;
