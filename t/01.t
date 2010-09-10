@@ -58,7 +58,7 @@ my @shipment_tuples =
 # test identity
 {
     diag('is_identical');
-    does_ok( $s, 'Set::Relation' );
+#    does_ok( $s, 'Set::Relation' );
     ok( $s->is_identical($s), 'relation is === to itself' );
     ok( $s->is_identical( relation( [@supplier_tuples] ) ),
         'relation is === to relation with same members'
