@@ -180,11 +180,17 @@ sub cardinality {
 sub _ensure_same_headings {
     my $h1 = set( @{ $_[0]->heading } );
     my $h2 = set( @{ $_[1]->heading } );
-    if ( !$h1->equal($h2) ) {
+    if ( !$_[0]->_has_same_heading( $_[1] ) ) {
         confess "headings differ:\n["
             . Core::join( ',', @{ $_[0]->heading } ) . "]\n["
             . Core::join( ',', @{ $_[1]->heading } ) . ']';
     }
+}
+
+sub _has_same_heading {
+    my $h1 = set( @{ $_[0]->heading } );
+    my $h2 = set( @{ $_[1]->heading } );
+    return $h1->equal($h2);
 }
 
 sub union {
