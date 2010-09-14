@@ -1,10 +1,13 @@
 
+{
 package Womo::Relation::Role;
 use Womo::Role;
 
 with 'Any';
+}
 
 
+{
 package Womo::Relation::Role::FromDepot;
 use Womo::Role;
 use Womo::Depot::Interface;
@@ -284,6 +287,10 @@ sub _array_arg_ensure_same_headings {
 }
 
 
+}
+
+
+{
 package Womo::Relation::Role::InMemory;
 use Womo::Role;
 use List::AllUtils qw(any all);
@@ -336,10 +343,10 @@ sub members {
     return @{ $self->_set };
 }
 
-1;
-__END__
+}
 
 
+{
 package Womo::Relation;
 use Womo::Class;
 
@@ -364,6 +371,10 @@ sub grep   { die }
 sub map    { die }
 sub pairs  { die }
 sub tuples { die }
+
+
+
+}
 
 1;
 __END__
