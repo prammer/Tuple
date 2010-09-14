@@ -22,13 +22,12 @@ with (
 );
 
 sub __enum_pair {
-    my ($self, $class) = @_;
+    my ( $self, $class ) = @_;
     require Iterator::Code;
-    my $h = {%$self};
+    my @h = %$self;
     return Iterator::Code->new(sub {
-        my $k = ( keys(%$h) )[0];
-        return if !defined $k;
-        return $class->new( $k, delete $h->{$k}, );
+        return if @h == 0;
+        return $class->new( shift @h, shift @h, );
     });
 }
 
@@ -36,14 +35,12 @@ sub enums {
     my $self = shift;
     require Enum;
     return $self->__enum_pair('Enum');
-#    return [ map { Enum->new( $_ => $self->{$_} ) } keys %$self ];
 }
 
 sub pairs {
     my $self = shift;
     require Pair;
     return $self->__enum_pair('Pair');
-#    return [ map { Pair->new( $_ => $self->{$_} ) } keys %$self ];
 }
 
 sub EnumMap {
@@ -108,8 +105,8 @@ sub projection {
 
 sub heading {
     my $self = shift;
-
-    return set( $self->attributes );
+    require Seq;
+    return Seq->new( sort CORE::keys( %{ $_[0] } ) );
 }
 
 # call this ->extension ? ->merge ?
