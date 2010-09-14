@@ -13,6 +13,11 @@ sub map    { die }
 sub pairs  { die }
 sub tuples { die }
 
+sub flat {
+    my $self = shift;
+    return $self->eager->flat;
+}
+
 }
 
 
@@ -80,8 +85,7 @@ sub _new_sth {
     return $sth;
 }
 
-# call this ->eager ?
-sub members {
+sub _members {
     my $self = shift;
 
     my $it = $self->_new_iterator or die;
@@ -92,10 +96,11 @@ sub members {
     return \@all;
 }
 
-sub Seq {
+sub eager {
     my $self = shift;
-    require Seq;
-    Seq->new( $self->members );
+
+    require Array;
+    return Array->new( $self->_members );
 }
 
 sub _new_relation {
@@ -186,9 +191,8 @@ sub restriction {
 sub cardinality {
     my $self = shift;
 
-    return $self->Seq->elems;
+    return $self->eager->elems;
     # TODO: select count(*) ... ??
-    return $self->_as_v2->cardinality;
 }
 
 sub _ensure_same_headings {
@@ -300,8 +304,8 @@ sub _array_arg_ensure_same_headings {
 
 
 {
-package Womo::Relation::Role::InMemory;
-use Womo::Role;
+package Womo::Relation::InMemory;
+use Womo::Class;
 use List::AllUtils qw(any all);
 
 with 'Womo::Relation::Role';
@@ -315,17 +319,27 @@ has '_set' => (
 sub BUILDARGS {
     my ( $class, @items ) = @_;
 
+    require Tuple;
     my $set = [];
-    my $heading = $class->heading;
+    my $heading;
     while ( my $item = shift @items ) {
-        confess 'bad type'
-            if ( !does_role( $item, 'Romo::Tuple' ) );
-        confess 'bad tuple type'
-            if ( !$heading->is_identical( $item->heading ) );
+        confess "bad value: $item" if ( !ref $item );
+        $item = Tuple->new($item) if ( ref($item) eq 'Hash' );
+        $item->isa('Tuple') or confess 'bad item';
+        $heading ||= $item->heading;
+        $heading->is_identical( $item->heading )
+            or confess 'inconsistent headings (keys)';
         next if any { $item->is_identical($_) } @items;
         push @$set, $item;
     }
     return { _set => $set };
+}
+
+sub eager {
+    my $self = shift;
+
+    require Array;
+    return Array->new( $self->_set );
 }
 
 sub contains {
@@ -341,15 +355,10 @@ sub contains {
 sub _is_identical_value {
     confess 'wrong number of arguments' if ( @_ != 2 );
     my ( $self, $other ) = @_;
-    my @a1 = $self->members;
-    my @a2 = $other->members;
-    return if ( @a1 != @a2 );
-    return $self->contains( @a2 );
-}
-
-sub members {
-    my $self = shift;
-    return @{ $self->_set };
+    my $a1 = $self->eager;
+    my $a2 = $other->eager;
+    return if ( @$a1 != @$a2 );
+    return $self->contains( @$a2 );
 }
 
 }
@@ -359,7 +368,7 @@ sub members {
 package Womo::Relation;
 use Womo::Class;
 
-with 'Womo::Relation::Role';
+with 'Womo::Relation::Role::FromDepot';
 
 sub _is_identical_value {
     my ( $self, $other ) = @_;
@@ -370,6 +379,7 @@ sub _is_identical_value {
 
     # it seems like there are many ways to do this
     # this is just a simple one to implement
+    # XXX: fail... not necessarily in the same order
     $self->Seq->is_identical( $other->Seq );
 }
 
