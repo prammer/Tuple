@@ -4,6 +4,15 @@ package Womo::Relation::Role;
 use Womo::Role;
 
 with 'Any';
+
+sub each   { die }
+sub elems  { die }
+sub enums  { die }
+sub grep   { die }
+sub map    { die }
+sub pairs  { die }
+sub tuples { die }
+
 }
 
 
@@ -363,14 +372,6 @@ sub _is_identical_value {
     # this is just a simple one to implement
     $self->Seq->is_identical( $other->Seq );
 }
-
-sub each   { die }
-sub elems  { die }
-sub enums  { die }
-sub grep   { die }
-sub map    { die }
-sub pairs  { die }
-sub tuples { die }
 
 
 
