@@ -1,14 +1,18 @@
 
 package Womo::Relation::Role;
 use Womo::Role;
-use Set::Object qw(set);
-use Moose::Util qw(does_role);
-use Womo::Depot::Interface;
-use Womo::ASTNode;
 
 with 'Any';
 
-#requires '_build_sql';
+
+package Womo::Relation::Role::FromDepot;
+use Womo::Role;
+use Womo::Depot::Interface;
+use Womo::ASTNode;
+use Moose::Util qw(does_role);
+use Set::Object qw(set);
+
+with 'Womo::Relation::Role';
 
 sub heading {}  # FIXME
 has 'heading' => (
@@ -37,8 +41,6 @@ has '_depot' => (
     required => 1,
 #    handles  => { '_db_conn' => 'db_conn' },
 );
-
-
 sub _new_iterator {
     my $self = shift;
     return $self->_depot->new_iterator( $self->_ast );
@@ -279,6 +281,59 @@ sub _array_arg_ensure_same_headings {
     my $others = $self->_array_arg(@_);
     $self->_ensure_same_headings($_) for (@$others);
     return $others;
+}
+
+
+package Womo::Relation::Role::InMemory;
+use Womo::Role;
+use List::AllUtils qw(any all);
+
+with 'Womo::Relation::Role';
+
+has '_set' => (
+    is       => 'ro',
+    isa      => 'ArrayRef',
+    required => 1,
+);
+
+sub BUILDARGS {
+    my ( $class, @items ) = @_;
+
+    my $set = [];
+    my $heading = $class->heading;
+    while ( my $item = shift @items ) {
+        confess 'bad type'
+            if ( !does_role( $item, 'Romo::Tuple' ) );
+        confess 'bad tuple type'
+            if ( !$heading->is_identical( $item->heading ) );
+        next if any { $item->is_identical($_) } @items;
+        push @$set, $item;
+    }
+    return { _set => $set };
+}
+
+sub contains {
+    my ( $self, @items ) = @_;
+    return 1 if ( @items == 0 );    # all sets contain the empty set
+    return all {
+        my $item = $_;
+        any { $_->is_identical($item) } $self->members;
+    }
+    @items;
+}
+
+sub _is_identical_value {
+    confess 'wrong number of arguments' if ( @_ != 2 );
+    my ( $self, $other ) = @_;
+    my @a1 = $self->members;
+    my @a2 = $other->members;
+    return if ( @a1 != @a2 );
+    return $self->contains( @a2 );
+}
+
+sub members {
+    my $self = shift;
+    return @{ $self->_set };
 }
 
 1;
