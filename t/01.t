@@ -25,8 +25,8 @@ validate_sr_class( $depot->database );
 # This is trying to use the running example data from
 # "Database in Depth" by C. J. Date.
 
-use Set::Relation::V2;
-sub relation { return Set::Relation::V2->new( @_ ); }
+use Womo::Relation;
+sub relation { return Womo::Relation::InMemory->new( @_ ); }
 
 sub validate_sr_class {
 
@@ -42,18 +42,18 @@ my $sp = $db->{shipments};
 # for testing, get the tuples in a known order
 my @supplier_tuples =
     sort { $a->{sno} cmp $b->{sno} }
-    @{ $s->members };
+    $s->flat;
 
 my @part_tuples =
     sort { $a->{pno} cmp $b->{pno} }
-    @{ $p->members };
+    $p->flat;
 
 my @shipment_tuples =
     sort {
         $a->{sno} cmp $b->{sno} ||
         $a->{pno} cmp $b->{pno}
     }
-    @{ $sp->members };
+    $sp->flat;
 
 # test identity
 {

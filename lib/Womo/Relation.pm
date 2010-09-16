@@ -13,6 +13,8 @@ sub map    { die }
 sub pairs  { die }
 sub tuples { die }
 
+requires 'eager';
+
 sub flat {
     my $self = shift;
     return $self->eager->flat;
@@ -100,7 +102,7 @@ sub eager {
     my $self = shift;
 
     require Array;
-    return Array->new( $self->_members );
+    return Array->new( @{ $self->_members } );
 }
 
 sub _new_relation {
@@ -317,19 +319,21 @@ has '_set' => (
 );
 
 sub BUILDARGS {
-    my ( $class, @items ) = @_;
+
+    #XXX: do we want ->new(...) or ->new([...]) ?
+    my ( $class, $items ) = @_;
 
     require Tuple;
     my $set = [];
     my $heading;
-    while ( my $item = shift @items ) {
+    while ( my $item = shift @$items ) {
         confess "bad value: $item" if ( !ref $item );
         $item = Tuple->new($item) if ( ref($item) eq 'Hash' );
         $item->isa('Tuple') or confess 'bad item';
         $heading ||= $item->heading;
         $heading->is_identical( $item->heading )
             or confess 'inconsistent headings (keys)';
-        next if any { $item->is_identical($_) } @items;
+        next if any { $item->is_identical($_) } @$items;
         push @$set, $item;
     }
     return { _set => $set };
