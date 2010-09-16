@@ -64,13 +64,13 @@ my @shipment_tuples =
         'relation is === to relation with same members'
     );
 
-    does_ok( $p, 'Set::Relation' );
+#    does_ok( $p, 'Set::Relation' );
     ok( $p->is_identical($p), 'relation is === to itself' );
     ok( $p->is_identical( relation( [@part_tuples] ) ),
         'relation is === to relation with same members'
     );
 
-    does_ok( $sp, 'Set::Relation' );
+#    does_ok( $sp, 'Set::Relation' );
     ok( $sp->is_identical($sp), 'relation is === to itself' );
     ok( $sp->is_identical( relation( [@shipment_tuples] ) ),
         'relation is === to relation with same members'
