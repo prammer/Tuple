@@ -2,6 +2,9 @@
 {
 package Womo::Relation::Role;
 use Womo::Role;
+use Moose::Util qw(does_role);
+use Seq;
+use List::AllUtils qw(any all);
 
 with 'Any';
 
@@ -20,6 +23,53 @@ sub flat {
     return $self->eager->flat;
 }
 
+around _is_identical_class => sub {
+    my $orig = shift;
+    my $self = shift;
+    return 1 if $self->$orig(@_);
+    return 1 if ( does_role( $_[0], 'Womo::Relation::Role' ) );
+    return 0;
+};
+
+has 'heading' => (
+    is       => 'ro',
+    isa      => 'Seq',    # Seq[Str] ?
+    required => 1,
+    lazy     => 1,
+    builder => '_build_heading',
+);
+
+around _is_identical_value => sub {
+    shift;
+    my ( $self, $other ) = @_;
+
+    return if !$self->_has_same_heading($other);
+    my $a1 = $self->eager;
+    my $a2 = $other->eager;
+    return if ( $self->cardinality != $other->cardinality );
+    return $self->contains( $other->flat );
+};
+
+sub contains {
+    my ( $self, @items ) = @_;
+
+    return 1 if ( @items == 0 );    # all sets contain the empty set
+    my @all = $self->flat;
+    return all {
+        my $item = $_;
+        any { $_->is_identical($item) } @all;
+    }
+    @items;
+}
+
+sub cardinality {
+    my $self = shift;
+
+    return $self->eager->elems;
+    # TODO: select count(*) ... ??
+}
+
+
 }
 
 
@@ -30,20 +80,9 @@ use Womo::Depot::Interface;
 use Womo::ASTNode;
 use Moose::Util qw(does_role);
 use Set::Object qw(set);
+use Seq;
 
 with 'Womo::Relation::Role';
-
-sub heading {}  # FIXME
-has 'heading' => (
-    is       => 'ro',
-    isa      => 'ArrayRef[Str]',
-    required => 1,
-    lazy     => 1,
-    default  => sub {
-        my $self = shift;
-        return $self->_ast->{'heading'};
-    },
-);
 
 has '_ast' => (
     init_arg => 'ast',
@@ -60,6 +99,12 @@ has '_depot' => (
     required => 1,
 #    handles  => { '_db_conn' => 'db_conn' },
 );
+
+sub _build_heading {
+    my $self = shift;
+    return Seq->new( @{ $self->_ast->{'heading'} } );
+}
+
 sub _new_iterator {
     my $self = shift;
     return $self->_depot->new_iterator( $self->_ast );
@@ -190,13 +235,6 @@ sub restriction {
     );
 }
 
-sub cardinality {
-    my $self = shift;
-
-    return $self->eager->elems;
-    # TODO: select count(*) ... ??
-}
-
 sub _ensure_same_headings {
     my $h1 = set( @{ $_[0]->heading } );
     my $h2 = set( @{ $_[1]->heading } );
@@ -308,7 +346,7 @@ sub _array_arg_ensure_same_headings {
 {
 package Womo::Relation::InMemory;
 use Womo::Class;
-use List::AllUtils qw(any all);
+use List::AllUtils qw(any);
 
 with 'Womo::Relation::Role';
 
@@ -336,33 +374,14 @@ sub BUILDARGS {
         next if any { $item->is_identical($_) } @$items;
         push @$set, $item;
     }
-    return { _set => $set };
+    return { _set => $set, heading => $heading, };
 }
 
 sub eager {
     my $self = shift;
 
     require Array;
-    return Array->new( $self->_set );
-}
-
-sub contains {
-    my ( $self, @items ) = @_;
-    return 1 if ( @items == 0 );    # all sets contain the empty set
-    return all {
-        my $item = $_;
-        any { $_->is_identical($item) } $self->members;
-    }
-    @items;
-}
-
-sub _is_identical_value {
-    confess 'wrong number of arguments' if ( @_ != 2 );
-    my ( $self, $other ) = @_;
-    my $a1 = $self->eager;
-    my $a2 = $other->eager;
-    return if ( @$a1 != @$a2 );
-    return $self->contains( @$a2 );
+    return Array->new( @{ $self->_set } );
 }
 
 }
@@ -374,18 +393,11 @@ use Womo::Class;
 
 with 'Womo::Relation::Role::FromDepot';
 
-sub _is_identical_value {
-    my ( $self, $other ) = @_;
-
-    # TODO: compare ast and depot
-
-    return if !$self->_has_same_heading($other);
-
-    # it seems like there are many ways to do this
-    # this is just a simple one to implement
-    # XXX: fail... not necessarily in the same order
-    $self->Seq->is_identical( $other->Seq );
-}
+#sub _is_identical_value {
+#    my ( $self, $other ) = @_;
+#
+#    # TODO: compare ast and depot
+#}
 
 
 
