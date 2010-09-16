@@ -104,9 +104,8 @@ sub projection {
 }
 
 sub heading {
-    my $self = shift;
     require Seq;
-    return Seq->new( sort CORE::keys( %{ $_[0] } ) );
+    return Seq->new( CORE::sort( CORE::keys( %{ $_[0] } ) ) );
 }
 
 # call this ->extension ? ->merge ?
