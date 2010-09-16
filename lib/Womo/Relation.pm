@@ -361,6 +361,8 @@ sub BUILDARGS {
     #XXX: do we want ->new(...) or ->new([...]) ?
     my ( $class, $items ) = @_;
 
+    return { _set => [], heading => Seq->new, } if ( @$items == 0 );
+
     require Tuple;
     my $set = [];
     my $heading;
