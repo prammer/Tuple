@@ -368,7 +368,7 @@ sub BUILDARGS {
     my $heading;
     while ( my $item = shift @$items ) {
         confess "bad value: $item" if ( !ref $item );
-        $item = Tuple->new($item) if ( ref($item) eq 'Hash' );
+        $item = Tuple->new($item) if ( ref($item) eq 'HASH' );
         $item->isa('Tuple') or confess 'bad item';
         $heading ||= $item->heading;
         $heading->is_identical( $item->heading )

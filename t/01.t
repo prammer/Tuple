@@ -103,18 +103,19 @@ my @shipment_tuples =
     my $expect = relation( [ $supplier_tuples[0] ] );
     ok( $s1->is_identical($expect), 'restriction' );
     cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
-    cmp_bag( $s1->members, $expect->members, 'same members' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
 }
 
 # projection
 {
     diag('projection');
+$DB::single =1;
     my $expect = relation(
         [ map { { city => $_ } } qw(London Paris Athens) ] );
     my $s1 = $s->projection('city');
     ok( $s1->is_identical($expect), 'projection' );
     cmp_ok( $s1->cardinality, '==', 3, 'cardinality' );
-    cmp_bag( $s1->members, $expect->members, 'same members' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
 }
 
 # rename
@@ -139,7 +140,7 @@ my @shipment_tuples =
         ],
     ]);
     ok( $s1->is_identical($expect), 'expected renamed relation' );
-    cmp_bag( $s1->members, $expect->members, 'same members' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
 }
 
 # union
@@ -150,7 +151,7 @@ my @shipment_tuples =
     my $s2 = relation( [ @supplier_tuples[ 1, 2, 3, 4 ] ] );
     my $s3 = $s1->union($s2);
     ok( $s->is_identical($s3), 'simple union' );
-    cmp_bag( $s->members, $s3->members, 'same members' );
+    cmp_bag( [$s->flat], [$s3->flat], 'same members' );
 }
 
 # insertion
@@ -165,7 +166,7 @@ my @shipment_tuples =
     my $s1 = $s->insertion($inserted);
     my $expect = $s->union( relation( [$inserted] ) );
     ok( $s1->is_identical($expect), 'insertion/union' );
-    cmp_bag( $s1->members, $expect->members, 'same members' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
 }
 
 # intersection
@@ -181,7 +182,7 @@ my @shipment_tuples =
         relation( [ @supplier_tuples[ 0, 4 ], $another ] ) );
     my $expect = relation( [ @supplier_tuples[ 0, 4 ] ] );
     ok( $s1->is_identical($expect), 'intersection' );
-    cmp_bag( $s1->members, $expect->members, 'same members' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
 
     my $s2  = $s->projection('sno');
     my $sp1 = $sp->projection('sno');
@@ -205,7 +206,7 @@ my @shipment_tuples =
     for my $sp (@shipment_tuples) {
         my $r = $s->restriction( sub { $_->{sno} eq $sp->{sno} } );
         ( $r->cardinality == 1 ) or die;
-        my $sno = $r->members->[0];
+        my $sno = $r->eager->[0];
         $expect = $expect->insertion({
             sno    => $sp->{sno},
             sname  => $sno->{sname},
@@ -216,7 +217,7 @@ my @shipment_tuples =
         });
     }
     ok( $j->is_identical($expect), 'join' );
-    cmp_bag( $j->members, $expect->members, 'same members' );
+    cmp_bag( [$j->flat], [$expect->flat], 'same members' );
 }
 
 # group
