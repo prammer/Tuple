@@ -346,7 +346,7 @@ sub _array_arg_ensure_same_headings {
 {
 package Womo::Relation::InMemory;
 use Womo::Class;
-use List::AllUtils qw(any);
+use List::AllUtils qw(any zip);
 
 with 'Womo::Relation::Role';
 
@@ -357,25 +357,58 @@ has '_set' => (
 );
 
 sub BUILDARGS {
+    my $class = shift;
+
+    return { _set => [], heading => Seq->new, } if ( @_ == 0 );
 
     #XXX: do we want ->new(...) or ->new([...]) ?
-    my ( $class, $items ) = @_;
-
+    my $items = shift;
+    ( @_ == 0 ) or confess 'expecting single ARRAY';
+    ( ( ref($items) || '' ) eq 'ARRAY' )
+        or confess 'expecting single ARRAY';
     return { _set => [], heading => Seq->new, } if ( @$items == 0 );
 
-    require Tuple;
+
     my $set = [];
     my $heading;
-    while ( my $item = shift @$items ) {
-        confess "bad value: $item" if ( !ref $item );
-        $item = Tuple->new($item) if ( ref($item) eq 'HASH' );
-        $item->isa('Tuple') or confess 'bad item';
-        $heading ||= $item->heading;
-        $heading->is_identical( $item->heading )
-            or confess 'inconsistent headings (keys)';
-        next if any { $item->is_identical($_) } @$items;
-        push @$set, $item;
+    require Tuple;
+    if ( ref( $items->[0] ) eq 'ARRAY' ) {
+        ( ref( $items->[1] ) eq 'ARRAY' ) or confess 'bad args';
+        ( @$items == 2 ) or confess 'bad args';
+        $heading = $items->[0];
+        $items   = $items->[1];
+        while ( my $item = shift @$items ) {
+            confess "bad value: $item" if ( !ref $item );
+            ( ref($item) eq 'ARRAY' ) or confess "bad value: $item";
+            $item = Tuple->new( zip @$heading, @$item )
+                or confess 'failed to create Tuple';
+            next if any { $item->is_identical($_) } @$set;
+            push @$set, $item;
+        }
+        $heading = Seq->new( CORE::sort @$heading );
     }
+    elsif ( ref( $items->[0] ) eq 'HASH' or ref( $items->[0] ) eq 'Tuple' ) {
+        while ( my $item = shift @$items ) {
+            confess "bad value: $item" if ( !ref $item );
+            if ( ref($item) eq 'HASH' ) {
+                $item = Tuple->new($item)
+                    or confess 'failed to create Tuple';
+            }
+            elsif ( !ref($item) ) {
+                confess "bad value: $item";
+            }
+            $item->isa('Tuple') or confess "bad value: $item";
+            $heading ||= $item->heading;
+            $heading->is_identical( $item->heading )
+                or confess 'inconsistent headings (keys)';
+            next if any { $item->is_identical($_) } @$set;
+            push @$set, $item;
+        }
+    }
+    else {
+        confess 'bad args';
+    }
+
     return { _set => $set, heading => $heading, };
 }
 
