@@ -146,8 +146,10 @@ my @shipment_tuples =
 {
     diag('union');
     ok( $s->is_identical( $s->union($s) ), 'self union yield self' );
-    my $s1 = relation( [ @supplier_tuples[ 0, 1, 2 ] ] );
-    my $s2 = relation( [ @supplier_tuples[ 1, 2, 3, 4 ] ] );
+#    my $s1 = relation( [ @supplier_tuples[ 0, 1, 2 ] ] );
+    my $s1 = $s->restriction(sno => [qw(S1 S2 S3)]);
+#    my $s2 = relation( [ @supplier_tuples[ 1, 2, 3, 4 ] ] );
+    my $s2 = $s->restriction(sno => [qw(S2 S3 S4 S5)]);
     my $s3 = $s1->union($s2);
     ok( $s->is_identical($s3), 'simple union' );
     cmp_bag( [$s->flat], [$s3->flat], 'same members' );
