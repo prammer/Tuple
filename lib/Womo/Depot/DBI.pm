@@ -138,6 +138,7 @@ sub _new_iterator_projection {
         code => sub {
             while (1) {
                 my $next = $parent_it->next or return;
+                return $next->projection(@attr);
                 my %new;
                 @new{@attr} = @$next{@attr};
                 return \%new;

@@ -3,7 +3,7 @@
 use utf8;
 use warnings FATAL => 'all';
 use strict;
-use Test::Most tests => 12, 'die';
+use Test::Most 'die';
 use Test::Moose;
 
 use Womo::Test qw(new_test_depot);
@@ -11,8 +11,8 @@ use Womo::Test qw(new_test_depot);
 my $depot = new_test_depot('./t/db');
 isa_ok( $depot, 'Womo::Depot::DBI' );
 
-use Set::Relation::V2;
-sub relation { return Set::Relation::V2->new( @_ ); }
+use Womo::Relation;
+sub relation { return Womo::Relation::InMemory->new( @_ ); }
 
 my $db = $depot->database;
 
@@ -24,7 +24,7 @@ my $sp = $db->{shipments};
 # for testing, get the tuples in a known order
 my @supplier_tuples =
     sort { $a->{sno} cmp $b->{sno} }
-    @{ $s->members };
+    $s->flat;
 
 my $s1 = $s->restriction( sno => 'S1' );
 my $s2 = $s->restriction( { sno => 'S1' } );
@@ -34,7 +34,7 @@ ok( $s1->is_identical($expect), 'restriction' );
 ok( $s2->is_identical($expect), 'restriction' );
 ok( $s3->is_identical($expect), 'restriction' );
 cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
-cmp_bag( $s1->members, $expect->members, 'same members' );
+cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
 
 my $out1 = $s->join($sp)->restriction( sno => 'S4' );
 my $out2 = $s->restriction( sno => 'S4' )->join($sp);
@@ -62,7 +62,7 @@ my $out3
     ->restriction( s_city => 'Paris', p_city => 'London', )
     ->projection(qw(sname color qty));
 cmp_ok( $out3->cardinality, '==', 1, 'cardinality' );
-my $t = $out3->members->[0] or die;
+my $t = $out3->eager->[0] or die;
 cmp_ok( $t->{sname}, 'eq', 'Jones', 'sname is Jones' );
 cmp_ok( $t->{color}, 'eq', 'Red',   'color is Red' );
 cmp_ok( $t->{qty},   '==', 300,     'qty is 300' );
@@ -73,6 +73,7 @@ $expect = relation(
     [ { map { $_ => $supplier_tuples[0]->{$_} } qw(sname status) } ] );
 ok( $s4->is_identical($expect), 'restriction' );
 
+done_testing();
 
 __END__
 
