@@ -109,7 +109,6 @@ my @shipment_tuples =
 # projection
 {
     diag('projection');
-$DB::single =1;
     my $expect = relation(
         [ map { { city => $_ } } qw(London Paris Athens) ] );
     my $s1 = $s->projection('city');
