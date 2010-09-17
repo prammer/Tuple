@@ -4,7 +4,7 @@ expunge Set::Relation (too much noise, want to diverge interface)
 mv t/01.t and t/restriction_sqla.t to lib/*/Relation/*/Test.pm
 make Relation be of Tuple instead of HashRef
 change Relation interface to have ->grep ->[h]slice? 
-    - restrict -> grep
+    - restrict -> grep (where?)
     - project  -> some kind of slice?
     - join     -> join (fights with Array->join ?)
     - union    -> union
@@ -15,4 +15,7 @@ change Relation interface to have ->grep ->[h]slice?
 - functions: sum(), count(), max(), etc...
 - deal with nulls
 - extention
+
+make a Tuple::Lazy (?) interface to use tie to lazily make
+$t->{'foo'} work (for depot database and catalog)
 
