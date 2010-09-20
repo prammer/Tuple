@@ -136,8 +136,6 @@ sub test_database {
 
     my $relation = sub { $in_memory_class->new(@_); };
 
-####
-
     # shorthands
     my $s  = $db->{suppliers} or die;
     my $p  = $db->{parts} or die;
@@ -363,8 +361,6 @@ sub test_database {
         ] );
         ok( $athens->is_identical($athens_expect), 'grouped attribute' );
     }
-
-####
 
 }
 
