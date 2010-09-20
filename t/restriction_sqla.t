@@ -6,7 +6,7 @@ use strict;
 use Test::Most 'die';
 use Test::Moose;
 
-use Womo::Test qw(new_test_depot);
+use Womo::Relation::Test qw(new_test_depot);
 
 my $depot = new_test_depot('./t/db');
 isa_ok( $depot, 'Womo::Depot::DBI' );

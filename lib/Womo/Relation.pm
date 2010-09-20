@@ -69,6 +69,31 @@ sub cardinality {
     # TODO: select count(*) ... ??
 }
 
+sub _hash_arg {
+    my $self = shift;
+    my $arg
+        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'HASH' )
+        ? shift
+        : {@_};
+    return $arg;
+}
+
+sub _array_arg {
+    my $self = shift;
+    my $arg
+        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'ARRAY' )
+        ? shift
+        : [@_];
+    return $arg;
+}
+
+sub _array_arg_ensure_same_headings {
+    my $self   = shift;
+    my $others = $self->_array_arg(@_);
+    $self->_ensure_same_headings($_) for (@$others);
+    return $others;
+}
+
 
 }
 
@@ -236,8 +261,6 @@ sub restriction {
 }
 
 sub _ensure_same_headings {
-    my $h1 = set( @{ $_[0]->heading } );
-    my $h2 = set( @{ $_[1]->heading } );
     if ( !$_[0]->_has_same_heading( $_[1] ) ) {
         confess "headings differ:\n["
             . Core::join( ',', @{ $_[0]->heading } ) . "]\n["
@@ -312,31 +335,6 @@ sub _reduce_op {
         },
         'depot' => $self->_depot,
     );
-}
-
-sub _hash_arg {
-    my $self = shift;
-    my $arg
-        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'HASH' )
-        ? shift
-        : {@_};
-    return $arg;
-}
-
-sub _array_arg {
-    my $self = shift;
-    my $arg
-        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'ARRAY' )
-        ? shift
-        : [@_];
-    return $arg;
-}
-
-sub _array_arg_ensure_same_headings {
-    my $self   = shift;
-    my $others = $self->_array_arg(@_);
-    $self->_ensure_same_headings($_) for (@$others);
-    return $others;
 }
 
 
@@ -417,6 +415,18 @@ sub eager {
 
     require Array;
     return Array->new( @{ $self->_set } );
+}
+
+sub union {
+    die;
+    my $self = shift;
+
+    # TODO: deal with is_empty
+
+    return $self if ( @_ == 0 );
+    my $others = $self->_array_arg_ensure_same_headings(@_);
+
+    return $self->_reduce_op( $others, 'union', [ @{ $self->heading } ], );
 }
 
 }

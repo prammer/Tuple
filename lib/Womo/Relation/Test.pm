@@ -1,5 +1,5 @@
 
-package Womo::Test;
+package Womo::Relation::Test;
 use utf8;
 use warnings FATAL => 'all';
 use strict;

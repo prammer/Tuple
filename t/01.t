@@ -5,7 +5,7 @@ use strict;
 use Test::Most tests => 1, 'die';
 use Test::Moose;
 
-use Womo::Test qw(new_test_depot);
+use Womo::Relation::Test qw(new_test_depot);
 
 #sub in {
 #    my $attr  = shift;
