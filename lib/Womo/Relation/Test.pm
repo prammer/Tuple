@@ -8,6 +8,38 @@ use Sub::Exporter -setup => { exports => [qw(new_test_db new_test_depot)] };
 
 #END { unlink $tmp }
 
+sub _data_suppliers {(
+    [qw(S1  Smith 20     London)],
+    [qw(S2  Jones 10     Paris )],
+    [qw(S3  Blake 30     Paris )],
+    [qw(S4  Clark 20     London)],
+    [qw(S5  Adams 30     Athens)],
+)}
+
+sub _data_parts {(
+    [qw(P1  Nut   Red   12.0   London)],
+    [qw(P2  Bolt  Green 17.0   Paris )],
+    [qw(P3  Screw Blue  17.0   Oslo  )],
+    [qw(P4  Screw Red   14.0   London)],
+    [qw(P5  Cam   Blue  12.0   Paris )],
+    [qw(P6  Cog   Red   19.0   London)],
+)}
+
+sub _data_shipments {(
+    [qw(S1  P1  300)],
+    [qw(S1  P2  200)],
+    [qw(S1  P3  400)],
+    [qw(S1  P4  200)],
+    [qw(S1  P5  100)],
+    [qw(S1  P6  100)],
+    [qw(S2  P1  300)],
+    [qw(S2  P2  400)],
+    [qw(S3  P2  200)],
+    [qw(S4  P2  200)],
+    [qw(S4  P4  300)],
+    [qw(S4  P5  400)],
+)}
+
 sub new_test_db {
     my $tmp = shift or die 'must pass a file';
     unlink $tmp;
@@ -56,45 +88,19 @@ sub new_test_db {
                 undef,
                 @$_
                 )
-                for (
-                    [qw(S1  Smith 20     London)],
-                    [qw(S2  Jones 10     Paris )],
-                    [qw(S3  Blake 30     Paris )],
-                    [qw(S4  Clark 20     London)],
-                    [qw(S5  Adams 30     Athens)],
-                );
+                for ( _data_suppliers() );
 
             $dbh->do(
                 'insert into parts (pno, pname, color, weight, city) values (?,?,?,?,?)',
                 undef,
                 @$_
                 )
-                for (
-                    [qw(P1  Nut   Red   12.0   London)],
-                    [qw(P2  Bolt  Green 17.0   Paris )],
-                    [qw(P3  Screw Blue  17.0   Oslo  )],
-                    [qw(P4  Screw Red   14.0   London)],
-                    [qw(P5  Cam   Blue  12.0   Paris )],
-                    [qw(P6  Cog   Red   19.0   London)],
-                );
+                for ( _data_parts() );
 
             $dbh->do(
                 'insert into shipments (sno, pno, qty) values (?,?,?)',
                 undef, @$_ )
-                for (
-                    [qw(S1  P1  300)],
-                    [qw(S1  P2  200)],
-                    [qw(S1  P3  400)],
-                    [qw(S1  P4  200)],
-                    [qw(S1  P5  100)],
-                    [qw(S1  P6  100)],
-                    [qw(S2  P1  300)],
-                    [qw(S2  P2  400)],
-                    [qw(S3  P2  200)],
-                    [qw(S4  P2  200)],
-                    [qw(S4  P4  300)],
-                    [qw(S4  P5  400)],
-                );
+                for ( _data_shipments() );
 
         }
     );
