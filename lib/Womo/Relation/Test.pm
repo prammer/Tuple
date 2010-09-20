@@ -7,29 +7,31 @@ use DBIx::Connector;
 use Test::Most 'die';
 use Test::Moose;
 use Womo::Relation;
+use List::AllUtils qw(zip);
+use Tuple;
 use Sub::Exporter -setup => { exports => [qw(new_test_db new_test_depot test_database)] };
 
 
 #END { unlink $tmp }
 
-sub _data_suppliers {(
+my $data_suppliers = sub {(
     [qw(S1  Smith 20     London)],
     [qw(S2  Jones 10     Paris )],
     [qw(S3  Blake 30     Paris )],
     [qw(S4  Clark 20     London)],
     [qw(S5  Adams 30     Athens)],
-)}
+)};
 
-sub _data_parts {(
+my $data_parts = sub {(
     [qw(P1  Nut   Red   12.0   London)],
     [qw(P2  Bolt  Green 17.0   Paris )],
     [qw(P3  Screw Blue  17.0   Oslo  )],
     [qw(P4  Screw Red   14.0   London)],
     [qw(P5  Cam   Blue  12.0   Paris )],
     [qw(P6  Cog   Red   19.0   London)],
-)}
+)};
 
-sub _data_shipments {(
+my $data_shipments = sub {(
     [qw(S1  P1  300)],
     [qw(S1  P2  200)],
     [qw(S1  P3  400)],
@@ -42,7 +44,34 @@ sub _data_shipments {(
     [qw(S4  P2  200)],
     [qw(S4  P4  300)],
     [qw(S4  P5  400)],
-)}
+)};
+
+my $data_to_hashrefs = sub {
+    my $heading = shift or die;
+    my $data    = shift or die;
+    return map {
+        my %h = zip( @$heading, @$_ );
+        \%h;
+    } $data->();
+};
+
+my $hrefs_suppliers = sub {
+    $data_to_hashrefs->( [qw(sno sname status city)], $data_suppliers );
+};
+
+my $hrefs_parts = sub {
+    $data_to_hashrefs->( [qw(pno pname color weight city)], $data_parts );
+};
+
+my $hrefs_shipments = sub {
+    $data_to_hashrefs->( [qw(sno pno qty)], $data_shipments );
+};
+
+my $hrefs_to_tuples = sub { map { Tuple->new($_) } $_[0]->(); };
+
+my $suppliers_tuples = sub { $hrefs_to_tuples->($hrefs_suppliers) };
+my $parts_tuples     = sub { $hrefs_to_tuples->($hrefs_parts) };
+my $shipments_tuples = sub { $hrefs_to_tuples->($hrefs_shipments) };
 
 sub new_test_db {
     my $tmp = shift or die 'must pass a file';
@@ -92,19 +121,19 @@ sub new_test_db {
                 undef,
                 @$_
                 )
-                for ( _data_suppliers() );
+                for ( $data_suppliers->() );
 
             $dbh->do(
                 'insert into parts (pno, pname, color, weight, city) values (?,?,?,?,?)',
                 undef,
                 @$_
                 )
-                for ( _data_parts() );
+                for ( $data_parts->() );
 
             $dbh->do(
                 'insert into shipments (sno, pno, qty) values (?,?,?)',
                 undef, @$_ )
-                for ( _data_shipments() );
+                for ( $data_shipments->() );
 
         }
     );
