@@ -5,6 +5,7 @@ use Womo::Role;
 use Moose::Util qw(does_role);
 use Seq;
 use List::AllUtils qw(any all);
+use Set::Object qw(set);
 
 with 'Any';
 
@@ -92,6 +93,20 @@ sub _array_arg_ensure_same_headings {
     my $others = $self->_array_arg(@_);
     $self->_ensure_same_headings($_) for (@$others);
     return $others;
+}
+
+sub _ensure_same_headings {
+    if ( !$_[0]->_has_same_heading( $_[1] ) ) {
+        confess "headings differ:\n["
+            . Core::join( ',', @{ $_[0]->heading } ) . "]\n["
+            . Core::join( ',', @{ $_[1]->heading } ) . ']';
+    }
+}
+
+sub _has_same_heading {
+    my $h1 = set( @{ $_[0]->heading } );
+    my $h2 = set( @{ $_[1]->heading } );
+    return $h1->equal($h2);
 }
 
 
@@ -258,20 +273,6 @@ sub restriction {
         },
         'depot' => $self->_depot,
     );
-}
-
-sub _ensure_same_headings {
-    if ( !$_[0]->_has_same_heading( $_[1] ) ) {
-        confess "headings differ:\n["
-            . Core::join( ',', @{ $_[0]->heading } ) . "]\n["
-            . Core::join( ',', @{ $_[1]->heading } ) . ']';
-    }
-}
-
-sub _has_same_heading {
-    my $h1 = set( @{ $_[0]->heading } );
-    my $h2 = set( @{ $_[1]->heading } );
-    return $h1->equal($h2);
 }
 
 sub union {

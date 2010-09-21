@@ -10,10 +10,8 @@ use Womo::Relation;
 use List::AllUtils qw(zip);
 use Tuple;
 use Const::Fast qw(const);
-use Sub::Exporter -setup => { exports => [qw(new_test_db new_test_depot test_database)] };
+use Sub::Exporter -setup => { exports => [qw(new_test_db new_test_depot test_database test_relation_class)] };
 
-
-#END { unlink $tmp }
 
 const my @suppliers_array => (
     [qw(S1  Smith 20     London)],
@@ -138,6 +136,22 @@ sub new_test_depot {
     my $depot
         = Womo::Depot::DBI->new( db_conn => $db_conn, db_dsn => 'foo' );    # fix db_dsn required
     return $depot;
+}
+
+sub test_relation_class {
+    my $class = shift;
+
+    my $db = new_database($class);
+    test_database( $db, @_ );
+}
+
+sub new_database {
+    my $class = shift;
+    return {
+        suppliers => $class->new( [@suppliers_hrefs] ),
+        parts     => $class->new( [@parts_hrefs] ),
+        shipments => $class->new( [@shipments_hrefs] ),
+    };
 }
 
 #sub in {
