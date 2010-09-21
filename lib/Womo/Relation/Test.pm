@@ -160,211 +160,219 @@ sub test_database {
     my $p  = $db->{parts} or die;
     my $sp = $db->{shipments} or die;
 
-    # test identity
-    {
-        diag('is_identical');
-    #    does_ok( $s, 'Set::Relation' );
-        ok( $s->is_identical($s), 'relation is === to itself' );
-        ok( $s->is_identical( $relation->( [@suppliers_hrefs] ) ),
-            'relation is === to relation with same members'
-        );
+    test_identity( $s, $p, $sp, $relation );
+    test_restriction( $s, $p, $sp, $relation );
+    test_projection( $s, $p, $sp, $relation );
+    test_rename( $s, $p, $sp, $relation );
+    test_union( $s, $p, $sp, $relation );
+    test_insertion( $s, $p, $sp, $relation );
+    test_intersection( $s, $p, $sp, $relation );
+    test_join( $s, $p, $sp, $relation );
+    test_group( $s, $p, $sp, $relation );
+}
 
-    #    does_ok( $p, 'Set::Relation' );
-        ok( $p->is_identical($p), 'relation is === to itself' );
-        ok( $p->is_identical( $relation->( [@parts_hrefs] ) ),
-            'relation is === to relation with same members'
-        );
+sub test_identity {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('is_identical');
+#    does_ok( $s, 'Set::Relation' );
+    ok( $s->is_identical($s), 'relation is === to itself' );
+    ok( $s->is_identical( $relation->( [@suppliers_hrefs] ) ),
+        'relation is === to relation with same members'
+    );
 
-    #    does_ok( $sp, 'Set::Relation' );
-        ok( $sp->is_identical($sp), 'relation is === to itself' );
-        ok( $sp->is_identical( $relation->( [@shipments_hrefs] ) ),
-            'relation is === to relation with same members'
-        );
+#    does_ok( $p, 'Set::Relation' );
+    ok( $p->is_identical($p), 'relation is === to itself' );
+    ok( $p->is_identical( $relation->( [@parts_hrefs] ) ),
+        'relation is === to relation with same members'
+    );
 
-        ok( !$p->is_identical($s),
-            'relations of different class are not ===' );
-        ok( !$s->is_identical($p),
-            'relations of different class are not ===' );
-        ok( !$sp->is_identical($s),
-            'relations of different class are not ===' );
-        ok( !$p->is_identical($sp),
-            'relations of different class are not ===' );
+#    does_ok( $sp, 'Set::Relation' );
+    ok( $sp->is_identical($sp), 'relation is === to itself' );
+    ok( $sp->is_identical( $relation->( [@shipments_hrefs] ) ),
+        'relation is === to relation with same members'
+    );
 
-        ok( !$s->is_identical(
-                $relation->( [ $suppliers_hrefs[0] ] ) ),
-            'relations of same class but different members are not ==='
-        );
-        ok( !$s->is_identical( $relation->( [] ) ),
-            'relations of same class but different members are not ==='
-        );
+    ok( !$p->is_identical($s),
+        'relations of different class are not ===' );
+    ok( !$s->is_identical($p),
+        'relations of different class are not ===' );
+    ok( !$sp->is_identical($s),
+        'relations of different class are not ===' );
+    ok( !$p->is_identical($sp),
+        'relations of different class are not ===' );
+
+    ok( !$s->is_identical(
+            $relation->( [ $suppliers_hrefs[0] ] ) ),
+        'relations of same class but different members are not ==='
+    );
+    ok( !$s->is_identical( $relation->( [] ) ),
+        'relations of same class but different members are not ==='
+    );
+}
+
+
+sub test_restriction {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('restriction');
+    my $s1 = $s->restriction( sub { $_->{sno} eq 'S1' } );
+    my $expect = $relation->( [ $suppliers_hrefs[0] ] );
+    ok( $s1->is_identical($expect), 'restriction' );
+    cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
+}
+
+sub test_projection {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('projection');
+    my $expect = $relation->(
+        [ map { { city => $_ } } qw(London Paris Athens) ] );
+    my $s1 = $s->projection('city');
+    ok( $s1->is_identical($expect), 'projection' );
+    cmp_ok( $s1->cardinality, '==', 3, 'cardinality' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
+}
+
+sub test_rename {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('rename');
+    my $map = {
+        a => 'sno',
+        b => 'sname',
+        c => 'status',
+        d => 'city',
+    };
+    my $s1 = $s->rename($map);
+    cmp_ok( $s->cardinality, '==', $s1->cardinality,
+        'same cardinality on rename' );
+    my $expect = $relation->( [
+            [ qw(a   b     c      d     ) ], [
+            [ qw(S1  Smith 20     London) ],
+            [ qw(S2  Jones 10     Paris ) ],
+            [ qw(S3  Blake 30     Paris ) ],
+            [ qw(S4  Clark 20     London) ],
+            [ qw(S5  Adams 30     Athens) ],
+        ],
+    ]);
+    ok( $s1->is_identical($expect), 'expected renamed relation' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
+}
+
+sub test_union {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('union');
+    ok( $s->is_identical( $s->union($s) ), 'self union yield self' );
+#    my $s1 = relation( [ @suppliers_hrefs[ 0, 1, 2 ] ] );
+    my $s1 = $s->restriction(sno => [qw(S1 S2 S3)]);
+#    my $s2 = relation( [ @suppliers_hrefs[ 1, 2, 3, 4 ] ] );
+    my $s2 = $s->restriction(sno => [qw(S2 S3 S4 S5)]);
+    my $s3 = $s1->union($s2);
+    ok( $s->is_identical($s3), 'simple union' );
+    cmp_bag( [$s->flat], [$s3->flat], 'same members' );
+}
+
+sub test_insertion {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('insertion');
+    my $inserted = {
+        sno    => 'S6',
+        sname  => 'Adams',
+        status => 30,
+        city   => 'Athens',
+    };
+    my $s1 = $s->insertion($inserted);
+    my $expect = $s->union( $relation->( [$inserted] ) );
+    ok( $s1->is_identical($expect), 'insertion/union' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
+}
+
+sub test_intersection {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('intersection');
+    my $another = {
+        sno    => 'S6',
+        sname  => 'Sam',
+        status => 30,
+        city   => 'Paris',
+    };
+    my $s1 = $s->intersection(
+        $relation->( [ @suppliers_hrefs[ 0, 4 ], $another ] ) );
+    my $expect = $relation->( [ @suppliers_hrefs[ 0, 4 ] ] );
+    ok( $s1->is_identical($expect), 'intersection' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
+
+    my $s2  = $s->projection('sno');
+    my $sp1 = $sp->projection('sno');
+    my $r   = $s2->intersection($sp1);
+    $expect = $relation->( [ map { { 'sno' => $_ } } qw(S1 S2 S3 S4) ] );
+    ok( $r->is_identical($expect), 'intersection' );
+}
+
+sub test_join {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('insertion');
+    my $j = $s->join($sp);
+    cmp_ok(
+        $j->cardinality,
+        '==',
+        scalar(@shipments_hrefs),
+        'cardinality of join'
+    );
+    my $expect = $relation->(
+        [ [qw(sno sname status city pno qty)], [] ] );
+    for my $sp (@shipments_hrefs) {
+        my $r = $s->restriction( sub { $_->{sno} eq $sp->{sno} } );
+        ( $r->cardinality == 1 ) or die;
+        my $sno = $r->eager->[0];
+        $expect = $expect->insertion({
+            sno    => $sp->{sno},
+            sname  => $sno->{sname},
+            status => $sno->{status},
+            city   => $sno->{city},
+            pno    => $sp->{pno},
+            qty    => $sp->{qty},
+        });
     }
+    ok( $j->is_identical($expect), 'join' );
+    cmp_bag( [$j->flat], [$expect->flat], 'same members' );
+}
 
-    # test relational operators
+sub test_group {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('group');
+    my $sg = $s->group( 'the_rest', [qw(sno sname status)] );
+    is( $sg->degree, 2, 'degree of group' );
+    is_deeply( $sg->heading, [qw(city the_rest)], 'heading of group' );
+    cmp_bag( $sg->attr('city'), [qw(London Paris Athens)],
+        'values for nongrouped attribute' );
 
-    # restriction
-    {
-        diag('restriction');
-        my $s1 = $s->restriction( sub { $_->{sno} eq 'S1' } );
-        my $expect = $relation->( [ $suppliers_hrefs[0] ] );
-        ok( $s1->is_identical($expect), 'restriction' );
-        cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
-        cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
-    }
+    my $london = $sg->restriction( sub { $_->{city} eq 'London' } )
+        ->attr('the_rest')->[0];
+    my $london_expect = $relation->( [
+            [ qw(sno sname status) ], [
+            [ qw(S1  Smith 20    ) ],
+            [ qw(S4  Clark 20    ) ],
+        ],
+    ] );
+    ok( $london->is_identical($london_expect), 'grouped attribute' );
 
-    # projection
-    {
-        diag('projection');
-        my $expect = $relation->(
-            [ map { { city => $_ } } qw(London Paris Athens) ] );
-        my $s1 = $s->projection('city');
-        ok( $s1->is_identical($expect), 'projection' );
-        cmp_ok( $s1->cardinality, '==', 3, 'cardinality' );
-        cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
-    }
+    my $paris = $sg->restriction( sub { $_->{city} eq 'Paris' } )
+        ->attr('the_rest')->[0];
+    my $paris_expect = $relation->( [
+            [ qw(sno sname status ) ], [
+            [ qw(S2  Jones 10     ) ],
+            [ qw(S3  Blake 30     ) ],
+        ],
+    ] );
+    ok( $paris->is_identical($paris_expect), 'grouped attribute' );
 
-    # rename
-    {
-        diag('rename');
-        my $map = {
-            a => 'sno',
-            b => 'sname',
-            c => 'status',
-            d => 'city',
-        };
-        my $s1 = $s->rename($map);
-        cmp_ok( $s->cardinality, '==', $s1->cardinality,
-            'same cardinality on rename' );
-        my $expect = $relation->( [
-                [ qw(a   b     c      d     ) ], [
-                [ qw(S1  Smith 20     London) ],
-                [ qw(S2  Jones 10     Paris ) ],
-                [ qw(S3  Blake 30     Paris ) ],
-                [ qw(S4  Clark 20     London) ],
-                [ qw(S5  Adams 30     Athens) ],
-            ],
-        ]);
-        ok( $s1->is_identical($expect), 'expected renamed relation' );
-        cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
-    }
-
-    # union
-    {
-        diag('union');
-        ok( $s->is_identical( $s->union($s) ), 'self union yield self' );
-    #    my $s1 = relation( [ @suppliers_hrefs[ 0, 1, 2 ] ] );
-        my $s1 = $s->restriction(sno => [qw(S1 S2 S3)]);
-    #    my $s2 = relation( [ @suppliers_hrefs[ 1, 2, 3, 4 ] ] );
-        my $s2 = $s->restriction(sno => [qw(S2 S3 S4 S5)]);
-        my $s3 = $s1->union($s2);
-        ok( $s->is_identical($s3), 'simple union' );
-        cmp_bag( [$s->flat], [$s3->flat], 'same members' );
-    }
-
-    # insertion
-    {
-        diag('insertion');
-        my $inserted = {
-            sno    => 'S6',
-            sname  => 'Adams',
-            status => 30,
-            city   => 'Athens',
-        };
-        my $s1 = $s->insertion($inserted);
-        my $expect = $s->union( $relation->( [$inserted] ) );
-        ok( $s1->is_identical($expect), 'insertion/union' );
-        cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
-    }
-
-    # intersection
-    {
-        diag('intersection');
-        my $another = {
-            sno    => 'S6',
-            sname  => 'Sam',
-            status => 30,
-            city   => 'Paris',
-        };
-        my $s1 = $s->intersection(
-            $relation->( [ @suppliers_hrefs[ 0, 4 ], $another ] ) );
-        my $expect = $relation->( [ @suppliers_hrefs[ 0, 4 ] ] );
-        ok( $s1->is_identical($expect), 'intersection' );
-        cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
-
-        my $s2  = $s->projection('sno');
-        my $sp1 = $sp->projection('sno');
-        my $r   = $s2->intersection($sp1);
-        $expect = $relation->( [ map { { 'sno' => $_ } } qw(S1 S2 S3 S4) ] );
-        ok( $r->is_identical($expect), 'intersection' );
-    }
-
-    # join
-    {
-        diag('join');
-        my $j = $s->join($sp);
-        cmp_ok(
-            $j->cardinality,
-            '==',
-            scalar(@shipments_hrefs),
-            'cardinality of join'
-        );
-        my $expect = $relation->(
-            [ [qw(sno sname status city pno qty)], [] ] );
-        for my $sp (@shipments_hrefs) {
-            my $r = $s->restriction( sub { $_->{sno} eq $sp->{sno} } );
-            ( $r->cardinality == 1 ) or die;
-            my $sno = $r->eager->[0];
-            $expect = $expect->insertion({
-                sno    => $sp->{sno},
-                sname  => $sno->{sname},
-                status => $sno->{status},
-                city   => $sno->{city},
-                pno    => $sp->{pno},
-                qty    => $sp->{qty},
-            });
-        }
-        ok( $j->is_identical($expect), 'join' );
-        cmp_bag( [$j->flat], [$expect->flat], 'same members' );
-    }
-
-    # group
-    {
-        diag('group');
-        my $sg = $s->group( 'the_rest', [qw(sno sname status)] );
-        is( $sg->degree, 2, 'degree of group' );
-        is_deeply( $sg->heading, [qw(city the_rest)], 'heading of group' );
-        cmp_bag( $sg->attr('city'), [qw(London Paris Athens)],
-            'values for nongrouped attribute' );
-
-        my $london = $sg->restriction( sub { $_->{city} eq 'London' } )
-            ->attr('the_rest')->[0];
-        my $london_expect = $relation->( [
-                [ qw(sno sname status) ], [
-                [ qw(S1  Smith 20    ) ],
-                [ qw(S4  Clark 20    ) ],
-            ],
-        ] );
-        ok( $london->is_identical($london_expect), 'grouped attribute' );
-
-        my $paris = $sg->restriction( sub { $_->{city} eq 'Paris' } )
-            ->attr('the_rest')->[0];
-        my $paris_expect = $relation->( [
-                [ qw(sno sname status ) ], [
-                [ qw(S2  Jones 10     ) ],
-                [ qw(S3  Blake 30     ) ],
-            ],
-        ] );
-        ok( $paris->is_identical($paris_expect), 'grouped attribute' );
-
-        my $athens = $sg->restriction( sub { $_->{city} eq 'Athens' } )
-            ->attr('the_rest')->[0];
-        my $athens_expect = $relation->( [
-                [ qw(sno sname status ) ], [
-                [ qw(S5  Adams 30     ) ],
-            ],
-        ] );
-        ok( $athens->is_identical($athens_expect), 'grouped attribute' );
-    }
-
+    my $athens = $sg->restriction( sub { $_->{city} eq 'Athens' } )
+        ->attr('the_rest')->[0];
+    my $athens_expect = $relation->( [
+            [ qw(sno sname status ) ], [
+            [ qw(S5  Adams 30     ) ],
+        ],
+    ] );
+    ok( $athens->is_identical($athens_expect), 'grouped attribute' );
 }
 
 1;
