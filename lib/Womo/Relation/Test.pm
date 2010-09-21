@@ -9,29 +9,30 @@ use Test::Moose;
 use Womo::Relation;
 use List::AllUtils qw(zip);
 use Tuple;
+use Const::Fast qw(const);
 use Sub::Exporter -setup => { exports => [qw(new_test_db new_test_depot test_database)] };
 
 
 #END { unlink $tmp }
 
-my $data_suppliers = sub {(
+const my @suppliers_array => (
     [qw(S1  Smith 20     London)],
     [qw(S2  Jones 10     Paris )],
     [qw(S3  Blake 30     Paris )],
     [qw(S4  Clark 20     London)],
     [qw(S5  Adams 30     Athens)],
-)};
+);
 
-my $data_parts = sub {(
+const my @parts_array => (
     [qw(P1  Nut   Red   12.0   London)],
     [qw(P2  Bolt  Green 17.0   Paris )],
     [qw(P3  Screw Blue  17.0   Oslo  )],
     [qw(P4  Screw Red   14.0   London)],
     [qw(P5  Cam   Blue  12.0   Paris )],
     [qw(P6  Cog   Red   19.0   London)],
-)};
+);
 
-my $data_shipments = sub {(
+const my @shipments_array => (
     [qw(S1  P1  300)],
     [qw(S1  P2  200)],
     [qw(S1  P3  400)],
@@ -44,34 +45,23 @@ my $data_shipments = sub {(
     [qw(S4  P2  200)],
     [qw(S4  P4  300)],
     [qw(S4  P5  400)],
-)};
+);
 
-my $data_to_hashrefs = sub {
+my $to_hashrefs = sub {
     my $heading = shift or die;
-    my $data    = shift or die;
-    return map {
-        my %h = zip( @$heading, @$_ );
-        \%h;
-    } $data->();
+    my @data    = @_    or die;
+    return map { { zip( @$heading, @$_ ) } } @data;
 };
 
-my $hrefs_suppliers = sub {
-    $data_to_hashrefs->( [qw(sno sname status city)], $data_suppliers );
-};
+const my @suppliers_hrefs => $to_hashrefs->( [qw(sno sname status city)],       @suppliers_array );
+const my @parts_hrefs     => $to_hashrefs->( [qw(pno pname color weight city)], @parts_array );
+const my @shipments_hrefs => $to_hashrefs->( [qw(sno pno qty)],                 @shipments_array );
 
-my $hrefs_parts = sub {
-    $data_to_hashrefs->( [qw(pno pname color weight city)], $data_parts );
-};
+my $to_tuples = sub { map { Tuple->new($_) } @_ };
 
-my $hrefs_shipments = sub {
-    $data_to_hashrefs->( [qw(sno pno qty)], $data_shipments );
-};
-
-my $hrefs_to_tuples = sub { map { Tuple->new($_) } $_[0]->(); };
-
-my $suppliers_tuples = sub { $hrefs_to_tuples->($hrefs_suppliers) };
-my $parts_tuples     = sub { $hrefs_to_tuples->($hrefs_parts) };
-my $shipments_tuples = sub { $hrefs_to_tuples->($hrefs_shipments) };
+const my @suppliers_tuples => $to_tuples->(@suppliers_hrefs);
+const my @parts_tuples     => $to_tuples->(@parts_hrefs);
+const my @shipments        => $to_tuples->(@shipments_hrefs);
 
 sub new_test_db {
     my $tmp = shift or die 'must pass a file';
@@ -121,19 +111,19 @@ sub new_test_db {
                 undef,
                 @$_
                 )
-                for ( $data_suppliers->() );
+                for ( @suppliers_array );
 
             $dbh->do(
                 'insert into parts (pno, pname, color, weight, city) values (?,?,?,?,?)',
                 undef,
                 @$_
                 )
-                for ( $data_parts->() );
+                for ( @parts_array );
 
             $dbh->do(
                 'insert into shipments (sno, pno, qty) values (?,?,?)',
                 undef, @$_ )
-                for ( $data_shipments->() );
+                for ( @shipments_array );
 
         }
     );
@@ -170,40 +160,24 @@ sub test_database {
     my $p  = $db->{parts} or die;
     my $sp = $db->{shipments} or die;
 
-    # for testing, get the tuples in a known order
-    my @supplier_tuples =
-        sort { $a->{sno} cmp $b->{sno} }
-        $s->flat;
-
-    my @part_tuples =
-        sort { $a->{pno} cmp $b->{pno} }
-        $p->flat;
-
-    my @shipment_tuples =
-        sort {
-            $a->{sno} cmp $b->{sno} ||
-            $a->{pno} cmp $b->{pno}
-        }
-        $sp->flat;
-
     # test identity
     {
         diag('is_identical');
     #    does_ok( $s, 'Set::Relation' );
         ok( $s->is_identical($s), 'relation is === to itself' );
-        ok( $s->is_identical( $relation->( [@supplier_tuples] ) ),
+        ok( $s->is_identical( $relation->( [@suppliers_hrefs] ) ),
             'relation is === to relation with same members'
         );
 
     #    does_ok( $p, 'Set::Relation' );
         ok( $p->is_identical($p), 'relation is === to itself' );
-        ok( $p->is_identical( $relation->( [@part_tuples] ) ),
+        ok( $p->is_identical( $relation->( [@parts_hrefs] ) ),
             'relation is === to relation with same members'
         );
 
     #    does_ok( $sp, 'Set::Relation' );
         ok( $sp->is_identical($sp), 'relation is === to itself' );
-        ok( $sp->is_identical( $relation->( [@shipment_tuples] ) ),
+        ok( $sp->is_identical( $relation->( [@shipments_hrefs] ) ),
             'relation is === to relation with same members'
         );
 
@@ -217,7 +191,7 @@ sub test_database {
             'relations of different class are not ===' );
 
         ok( !$s->is_identical(
-                $relation->( [ $supplier_tuples[0] ] ) ),
+                $relation->( [ $suppliers_hrefs[0] ] ) ),
             'relations of same class but different members are not ==='
         );
         ok( !$s->is_identical( $relation->( [] ) ),
@@ -231,7 +205,7 @@ sub test_database {
     {
         diag('restriction');
         my $s1 = $s->restriction( sub { $_->{sno} eq 'S1' } );
-        my $expect = $relation->( [ $supplier_tuples[0] ] );
+        my $expect = $relation->( [ $suppliers_hrefs[0] ] );
         ok( $s1->is_identical($expect), 'restriction' );
         cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
         cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
@@ -277,9 +251,9 @@ sub test_database {
     {
         diag('union');
         ok( $s->is_identical( $s->union($s) ), 'self union yield self' );
-    #    my $s1 = relation( [ @supplier_tuples[ 0, 1, 2 ] ] );
+    #    my $s1 = relation( [ @suppliers_hrefs[ 0, 1, 2 ] ] );
         my $s1 = $s->restriction(sno => [qw(S1 S2 S3)]);
-    #    my $s2 = relation( [ @supplier_tuples[ 1, 2, 3, 4 ] ] );
+    #    my $s2 = relation( [ @suppliers_hrefs[ 1, 2, 3, 4 ] ] );
         my $s2 = $s->restriction(sno => [qw(S2 S3 S4 S5)]);
         my $s3 = $s1->union($s2);
         ok( $s->is_identical($s3), 'simple union' );
@@ -311,8 +285,8 @@ sub test_database {
             city   => 'Paris',
         };
         my $s1 = $s->intersection(
-            $relation->( [ @supplier_tuples[ 0, 4 ], $another ] ) );
-        my $expect = $relation->( [ @supplier_tuples[ 0, 4 ] ] );
+            $relation->( [ @suppliers_hrefs[ 0, 4 ], $another ] ) );
+        my $expect = $relation->( [ @suppliers_hrefs[ 0, 4 ] ] );
         ok( $s1->is_identical($expect), 'intersection' );
         cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
 
@@ -330,12 +304,12 @@ sub test_database {
         cmp_ok(
             $j->cardinality,
             '==',
-            scalar(@shipment_tuples),
+            scalar(@shipments_hrefs),
             'cardinality of join'
         );
         my $expect = $relation->(
             [ [qw(sno sname status city pno qty)], [] ] );
-        for my $sp (@shipment_tuples) {
+        for my $sp (@shipments_hrefs) {
             my $r = $s->restriction( sub { $_->{sno} eq $sp->{sno} } );
             ( $r->cardinality == 1 ) or die;
             my $sno = $r->eager->[0];
