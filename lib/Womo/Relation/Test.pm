@@ -166,10 +166,10 @@ sub test_database {
     test_rename( $s, $p, $sp, $relation );
     test_union( $s, $p, $sp, $relation );
     test_sqla_syntax( $s, $p, $sp, $relation );
-    test_insertion( $s, $p, $sp, $relation );
-    test_intersection( $s, $p, $sp, $relation );
-    test_join( $s, $p, $sp, $relation );
     test_group( $s, $p, $sp, $relation );
+    test_intersection( $s, $p, $sp, $relation );
+    test_insertion( $s, $p, $sp, $relation );
+    test_join( $s, $p, $sp, $relation );
 }
 
 sub test_identity {
@@ -310,7 +310,7 @@ sub test_intersection {
 
 sub test_join {
     my ($s, $p, $sp, $relation) = @_;
-    diag('insertion');
+    diag('join');
     my $j = $s->join($sp);
     cmp_ok(
         $j->cardinality,
