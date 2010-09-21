@@ -165,6 +165,7 @@ sub test_database {
     test_projection( $s, $p, $sp, $relation );
     test_rename( $s, $p, $sp, $relation );
     test_union( $s, $p, $sp, $relation );
+    test_sqla_syntax( $s, $p, $sp, $relation );
     test_insertion( $s, $p, $sp, $relation );
     test_intersection( $s, $p, $sp, $relation );
     test_join( $s, $p, $sp, $relation );
@@ -373,6 +374,57 @@ sub test_group {
         ],
     ] );
     ok( $athens->is_identical($athens_expect), 'grouped attribute' );
+}
+
+sub test_sqla_syntax {
+    my ($s, $p, $sp, $relation) = @_;
+    diag('sqla syntax');
+    my $s1 = $s->restriction( sno => 'S1' );
+    my $s2 = $s->restriction( { sno => 'S1' } );
+    my $s3 = $s->restriction( sub { $_->{sno} eq 'S1' } );
+    my $expect = $relation->( [ $suppliers_hrefs[0] ] );
+    ok( $s1->is_identical($expect), 'restriction' );
+    ok( $s2->is_identical($expect), 'restriction' );
+    ok( $s3->is_identical($expect), 'restriction' );
+    cmp_ok( $s1->cardinality, '==', 1, 'cardinality' );
+    cmp_bag( [$s1->flat], [$expect->flat], 'same members' );
+
+    my $out1 = $s->join($sp)->restriction( sno => 'S4' );
+    my $out2 = $s->restriction( sno => 'S4' )->join($sp);
+
+    $expect = $relation->( [
+            [ qw(sno sname status city   pno qty) ], [
+            [ qw(S4  Clark 20     London P2  200) ],
+            [ qw(S4  Clark 20     London P4  300) ],
+            [ qw(S4  Clark 20     London P5  400) ],
+        ],
+    ] );
+
+    ok( $out1->is_identical($expect), 'join + restriction' );
+
+    # TODO: optimize this (somehow?) to not even query since they are the same logically?
+    ok( $out1->is_identical($out2), 'restriction + join' );
+
+    $out2 = $s->restriction( sno => 'S4', sname => 'Clark', )->join($sp);
+    ok( $out1->is_identical($out2), 'restriction + join' );
+    #$s->join($p, $sp)->members;
+
+    my $out3
+        = $s->rename( s_city => 'city', )
+        ->join( $p->rename( p_city => 'city' ), $sp, )
+        ->restriction( s_city => 'Paris', p_city => 'London', )
+        ->projection(qw(sname color qty));
+    cmp_ok( $out3->cardinality, '==', 1, 'cardinality' );
+    my $t = $out3->eager->[0] or die;
+    cmp_ok( $t->{sname}, 'eq', 'Jones', 'sname is Jones' );
+    cmp_ok( $t->{color}, 'eq', 'Red',   'color is Red' );
+    cmp_ok( $t->{qty},   '==', 300,     'qty is 300' );
+
+    # projection on an iterator (not sth) based restriction
+    my $s4 = $s3->projection(qw(sname status));
+    $expect = $relation->(
+        [ { map { $_ => $suppliers_hrefs[0]->{$_} } qw(sname status) } ] );
+    ok( $s4->is_identical($expect), 'restriction' );
 }
 
 1;
