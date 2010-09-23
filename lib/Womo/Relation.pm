@@ -104,9 +104,12 @@ sub _ensure_same_headings {
 }
 
 sub _has_same_heading {
-    my $h1 = set( @{ $_[0]->heading } );
-    my $h2 = set( @{ $_[1]->heading } );
-    return $h1->equal($h2);
+    return $_[0]->_headings_are_same( $_[0]->heading, $_[1]->heading );
+}
+
+sub _headings_are_same {
+    my $self = shift;
+    return set( @{ $_[0] } )->equals( set( @{ $_[1] } ) );
 }
 
 
@@ -304,6 +307,22 @@ sub join {
     my $heading = set( map { @{ $_->heading } } ( $self, @$others ) );
     return $self->_reduce_op( $others, 'join', [ sort $heading->members ],
     );
+}
+
+sub insertion {
+die;
+    my ( $self, @tuples ) = @_;
+
+    # check headings
+    # do lazy ast on ::InMemory relation
+    # checking ->contains, etc happens lazily
+    my $heading = $self->heading;
+    for my $t (@tuples) {
+        confess 'not a Romo::Tuple' if ( !$t->does('Romo::Tuple') );
+        confess 'different headings'
+            if ( !$heading->is_identical( $t->heading ) );
+    }
+    return $self->meta->name->new( $self->members, @tuples );
 }
 
 sub _reduce_op {
