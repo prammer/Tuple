@@ -21,7 +21,7 @@ has 'name' => (
 has 'op' => (
     is       => 'ro',
     isa      => 'Str',
-#    required => 1,
+#    required => 1,     # tables do not have this
 );
 
 has 'args' => (
