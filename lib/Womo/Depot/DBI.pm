@@ -65,6 +65,9 @@ sub _build_database {
     # TODO: use an iterator?
     for my $t ( @{ $c->members } ) {
         my $columns = $t->{columns}->attr('column_name');
+        # TODO: memory leak, circular references
+        # relation has depot, depot has database which has relation
+        # make database a lazy Tuple to fix?
         $db->{ $t->{table_name} } = Womo::Relation->new(
             ast => {
                 'type'    => 'table',
