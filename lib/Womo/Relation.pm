@@ -109,7 +109,7 @@ sub _has_same_heading {
 
 sub _headings_are_same {
     my $self = shift;
-    return set( @{ $_[0] } )->equals( set( @{ $_[1] } ) );
+    return set( @{ $_[0] } )->equal( set( @{ $_[1] } ) );
 }
 
 
@@ -151,28 +151,6 @@ sub _build_heading {
 sub _new_iterator {
     my $self = shift;
     return $self->_depot->new_iterator( $self->_ast );
-
-    return Womo::Relation::Iterator::STH->new(
-#        relation => $self,
-        sth      => $self->_new_sth,
-    );
-}
-
-sub _new_sth {
-    my $self = shift;
-    return $self->_depot->new_sth( $self->_ast );
-
-    my $sql = $self->_build_sql('a');
-    print "-------------\n" . $sql->text . "\n";
-    my $db_conn = $self->_db_conn;
-    print join( ', ', map { "'$_'" } @{ $sql->bind } ) . "\n";
-    print "---------------\n";
-    my $sth = $db_conn->run( sub {
-        my $sth = $_->prepare( $sql->text ) or die $_->errstr;
-        $sth->execute( @{ $sql->bind } ) or die $sth->errstr;
-        return $sth;
-    });
-    return $sth;
 }
 
 sub _members {
