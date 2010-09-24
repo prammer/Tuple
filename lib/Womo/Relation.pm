@@ -6,6 +6,8 @@ use Moose::Util qw(does_role);
 use Seq;
 use List::AllUtils qw(any all);
 use Set::Object qw(set);
+use Womo::Relation::Util;
+use Womo::ASTNode;
 
 with 'Any';
 
@@ -18,6 +20,7 @@ sub pairs  { die }
 sub tuples { die }
 
 requires 'eager';
+requires '_ast';
 
 sub flat {
     my $self = shift;
@@ -51,6 +54,8 @@ around _is_identical_value => sub {
     return $self->contains( $other->flat );
 };
 
+sub _has_same_heading { goto &Womo::Relation::Util::has_same_heading; }
+
 sub contains {
     my ( $self, @items ) = @_;
 
@@ -70,48 +75,13 @@ sub cardinality {
     # TODO: select count(*) ... ??
 }
 
-sub _hash_arg {
-    my $self = shift;
-    my $arg
-        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'HASH' )
-        ? shift
-        : {@_};
-    return $arg;
-}
-
-sub _array_arg {
-    my $self = shift;
-    my $arg
-        = ( @_ == 1 && ref( $_[0] ) && ref( $_[0] ) eq 'ARRAY' )
-        ? shift
-        : [@_];
-    return $arg;
-}
-
-sub _array_arg_ensure_same_headings {
-    my $self   = shift;
-    my $others = $self->_array_arg(@_);
-    $self->_ensure_same_headings($_) for (@$others);
-    return $others;
-}
-
-sub _ensure_same_headings {
-    if ( !$_[0]->_has_same_heading( $_[1] ) ) {
-        confess "headings differ:\n["
-            . Core::join( ',', @{ $_[0]->heading } ) . "]\n["
-            . Core::join( ',', @{ $_[1]->heading } ) . ']';
-    }
-}
-
-sub _has_same_heading {
-    return $_[0]->_headings_are_same( $_[0]->heading, $_[1]->heading );
-}
-
-sub _headings_are_same {
-    my $self = shift;
-    return set( @{ $_[0] } )->equal( set( @{ $_[1] } ) );
-}
-
+sub projection   { goto &Womo::Relation::Util::projection; }
+sub rename       { goto &Womo::Relation::Util::rename; }
+sub restriction  { goto &Womo::Relation::Util::restriction; }
+sub union        { goto &Womo::Relation::Util::union; }
+sub intersection { goto &Womo::Relation::Util::intersection; }
+sub insertion    { goto &Womo::Relation::Util::insertion; }
+sub join         { goto &Womo::Relation::Util::join; }
 
 }
 
@@ -119,14 +89,10 @@ sub _headings_are_same {
 {
 package Womo::Relation::Role::FromDepot;
 use Womo::Role;
-use Womo::Depot::Interface;
-use Womo::ASTNode;
-use Moose::Util qw(does_role);
-use Set::Object qw(set);
+use Womo::Relation::Util;
 use Seq;
 
-with 'Womo::Relation::Role';
-
+sub _ast {}
 has '_ast' => (
     init_arg => 'ast',
     is       => 'ro',
@@ -135,28 +101,22 @@ has '_ast' => (
     coerce   => 1,
 );
 
-has '_depot' => (
-    init_arg => 'depot',
-    is       => 'ro',
-    does     => 'Womo::Depot::Interface',
-    required => 1,
-#    handles  => { '_db_conn' => 'db_conn' },
-);
+with 'Womo::Relation::Role';
 
 sub _build_heading {
     my $self = shift;
     return Seq->new( @{ $self->_ast->{'heading'} } );
 }
 
-sub _new_iterator {
-    my $self = shift;
-    return $self->_depot->new_iterator( $self->_ast );
-}
+#sub _new_iterator {
+#    my $self = shift;
+#    return $self->_depot->new_iterator( $self->_ast );
+#}
 
 sub _members {
     my $self = shift;
 
-    my $it = $self->_new_iterator or die;
+    my $it = Womo::Relation::Util::new_iterator($self->_ast);
     my @all;
     while ( my $row = $it->next ) {
         push @all, $row;
@@ -171,171 +131,6 @@ sub eager {
     return Array->new( @{ $self->_members } );
 }
 
-sub _new_relation {
-    my $self = shift;
-    return $self->meta->name->new(@_);
-}
-
-sub projection {
-    my $self = shift;
-
-    my $attributes = $self->_array_arg(@_);
-    {
-        my $a     = set(@$attributes);
-        my $h     = set( @{ $self->heading } );
-        my $broke = $a->difference($h);
-        if ( $broke->size > 0 ) {
-            my $members = Core::join( ', ', $broke->members );
-            confess "not attribute(s) of this relation: $members";
-        }
-    }
-
-    return $self->_new_relation(
-        'ast' => {
-            'type'    => 'operator',
-            'op'      => 'projection',
-            'args'    => [ $self->_ast, $attributes, ],
-            'heading' => $attributes,
-        },
-        'depot' => $self->_depot,
-    );
-}
-
-sub _components {
-    my $self = shift;
-    return { map { $_ => 1 } @{ $self->heading } };
-}
-
-# TODO: the keys and values seem reversed, but this is how Set::Relation works
-sub rename {
-    my $self = shift;
-    my $map  = $self->_hash_arg(@_);
-
-    my $comp = $self->_components;
-    for my $attr ( values %$map ) {
-        confess "'$attr' is not an attribute of this relation"
-            if ( !$comp->{$attr} );
-    }
-
-    # check for values %$map in keys %$comp but not in keys %$map
-    my $orig   = set( keys %$comp );
-    my $new    = set( keys %$map );
-    my $rename = set( values %$map );
-    my $broke  = $orig->intersection($new)->difference($rename);
-    if ( $broke->size > 0 ) {
-        my $members = Core::join( ', ', $broke->members );
-        confess "renaming to existing unrenamed attribute(s): $members";
-    }
-
-    return $self->_new_relation(
-        'ast' => {
-            'type' => 'operator',
-            'op'   => 'rename',
-            'args' => [ $self->_ast, {%$map}, ],
-            'heading' =>
-                [ sort $orig->difference($rename)->union($new)->members ],
-        },
-        'depot' => $self->_depot,
-    );
-}
-
-# TODO: instead of only taking a CodeRef, also take some
-# kind of SQL::Abstract expression (DBIx::Class::SQLAHacks)
-sub restriction {
-    my $self = shift;
-    my $expr = @_ == 1 ? shift : {@_};
-
-    return $self->_new_relation(
-        'ast' => {
-            'type'    => 'operator',
-            'op'      => 'restriction',
-            'args'    => [ $self->_ast, $expr, ],
-            'heading' => [ @{ $self->heading } ],
-        },
-        'depot' => $self->_depot,
-    );
-}
-
-sub union {
-    my $self = shift;
-
-    # TODO: deal with is_empty
-
-    return $self if ( @_ == 0 );
-    my $others = $self->_array_arg_ensure_same_headings(@_);
-
-    return $self->_reduce_op( $others, 'union', [ @{ $self->heading } ], );
-}
-
-sub intersection {
-    my $self = shift;
-
-    confess 'TODO: infinite relation?' if ( @_ == 0 );
-    my $others = $self->_array_arg_ensure_same_headings(@_);
-    return $self->_reduce_op( $others, 'intersection',
-        [ @{ $self->heading } ],
-    );
-}
-
-sub join {
-    my $self = shift;
-
-    my $others = $self->_array_arg(@_);
-    return $self if ( @$others == 0 );
-    my $heading = set( map { @{ $_->heading } } ( $self, @$others ) );
-    return $self->_reduce_op( $others, 'join', [ sort $heading->members ],
-    );
-}
-
-sub insertion {
-die;
-    my ( $self, @tuples ) = @_;
-
-    # check headings
-    # do lazy ast on ::InMemory relation
-    # checking ->contains, etc happens lazily
-    my $heading = $self->heading;
-    for my $t (@tuples) {
-        confess 'not a Romo::Tuple' if ( !$t->does('Romo::Tuple') );
-        confess 'different headings'
-            if ( !$heading->is_identical( $t->heading ) );
-    }
-    return $self->meta->name->new( $self->members, @tuples );
-}
-
-sub _reduce_op {
-    my ( $self, $others, $op, $heading ) = @_;
-
-# TODO: deal better with $others not doing Womo::Relation::Role (ie not SQL backed)
-    my ( @does, @not );
-    for my $r (@$others) {
-        if ( does_role( $r, 'Womo::Relation::Role' ) ) {
-            push @does, $r;
-        }
-        else {
-            push @not, $r;
-        }
-    }
-
-    if ( @not != 0 ) {
-        my $one = shift @not;
-        return ( @not ? $one->$op(@not) : $one )
-            ->$op( ( @does ? $self->$op(@does) : $self ) );
-    }
-
-    return $self->_new_relation(
-        'ast' => {
-            'type'    => 'operator',
-            'op'      => $op,
-            'args'    => [ map { $_->_ast } ( $self, @$others ) ],
-            'heading' => $heading,
-
-        },
-        'depot' => $self->_depot,
-    );
-}
-
-
 }
 
 
@@ -344,18 +139,31 @@ package Womo::Relation::InMemory;
 use Womo::Class;
 use List::AllUtils qw(any zip);
 
-with 'Womo::Relation::Role';
-
 has '_set' => (
-    is       => 'ro',
-    isa      => 'ArrayRef',
-    required => 1,
+    is  => 'ro',
+    isa => 'ArrayRef',
 );
 
-sub BUILDARGS {
+has '_ast' => (
+    init_arg => 'ast',
+    is       => 'ro',
+    isa      => 'Womo::ASTNode',
+    coerce   => 1,
+);
+
+with 'Womo::Relation::Role';
+
+around 'BUILDARGS' => sub {
+    my $orig = shift;
     my $class = shift;
 
     return { _set => [], heading => Seq->new, } if ( @_ == 0 );
+
+    if (@_ == 1 && ref($_[0]) && ref($_[0]) eq 'ARRAY') {
+    }
+    else {
+        return $class->$orig(@_);
+    }
 
     #XXX: do we want ->new(...) or ->new([...]) ?
     my $items = shift;
@@ -406,25 +214,22 @@ sub BUILDARGS {
     }
 
     return { _set => $set, heading => $heading, };
-}
+};
+
+sub BUILD { }
+after 'BUILD' => sub {
+    my $self = shift;
+    $self->heading or confess 'need heading';
+    if ( !$self->_set ) {
+        $self->_ast or confess 'need either the set of items or an ast';
+    }
+};
 
 sub eager {
     my $self = shift;
 
     require Array;
     return Array->new( @{ $self->_set } );
-}
-
-sub union {
-    die;
-    my $self = shift;
-
-    # TODO: deal with is_empty
-
-    return $self if ( @_ == 0 );
-    my $others = $self->_array_arg_ensure_same_headings(@_);
-
-    return $self->_reduce_op( $others, 'union', [ @{ $self->heading } ], );
 }
 
 }
