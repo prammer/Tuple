@@ -1,9 +1,7 @@
 
 migrate to Iterator instead of Womo::Iterator
 expunge Set::Relation (too much noise, want to diverge interface)
-mv t/01.t and t/restriction_sqla.t to lib/*/Relation/*/Test.pm
-make Relation be of Tuple instead of HashRef
-change Relation interface to have ->grep ->[h]slice? 
+change Relation interface to have ->grep ->[h]slice? ->where?
     - restrict -> grep (where?)
     - project  -> some kind of slice?
     - join     -> join (fights with Array->join ?)
@@ -15,7 +13,10 @@ change Relation interface to have ->grep ->[h]slice?
 - functions: sum(), count(), max(), etc...
 - deal with nulls
 - extention
+- matching (another name for semijoin) (this is not associative)
 
 make a Tuple::Lazy (?) interface to use tie to lazily make
 $t->{'foo'} work (for depot database and catalog)
+
+make some kind of "all" thing for iterators that is fast
 
