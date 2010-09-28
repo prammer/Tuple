@@ -10,7 +10,7 @@ use Womo::Relation;
 use List::AllUtils qw(zip);
 use Tuple;
 use Const::Fast qw(const);
-use Sub::Exporter -setup => { exports => [qw(new_test_db new_test_depot test_database test_relation_class)] };
+use Sub::Exporter -setup => { exports => [qw(new_test_db new_test_depot test_database test_relation_class tables)] };
 
 
 const my @suppliers_array => (
@@ -51,9 +51,19 @@ my $to_hashrefs = sub {
     return map { { zip( @$heading, @$_ ) } } @data;
 };
 
-const my @suppliers_hrefs => $to_hashrefs->( [qw(sno sname status city)],       @suppliers_array );
-const my @parts_hrefs     => $to_hashrefs->( [qw(pno pname color weight city)], @parts_array );
-const my @shipments_hrefs => $to_hashrefs->( [qw(sno pno qty)],                 @shipments_array );
+sub tables {
+    {
+        'suppliers' => [qw(sno sname status city)],
+        'parts'     => [qw(pno pname color weight city)],
+        'shipments' => [qw(sno pno qty)],
+    };
+}
+
+my $columns = sub { tables()->{ $_[0] }; };
+
+const my @suppliers_hrefs => $to_hashrefs->( $columns->('suppliers'), @suppliers_array );
+const my @parts_hrefs     => $to_hashrefs->( $columns->('parts'),     @parts_array );
+const my @shipments_hrefs => $to_hashrefs->( $columns->('shipments'), @shipments_array );
 
 my $to_tuples = sub { map { Tuple->new($_) } @_ };
 
