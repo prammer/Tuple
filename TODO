@@ -9,7 +9,7 @@ change Relation interface to have ->grep ->[h]slice? ->where?
     - semidifference -> semidifference
 
 - left outer join
-- group by
+- group by (classify?)
 - functions: sum(), count(), max(), etc...
 - deal with nulls
 - extention
