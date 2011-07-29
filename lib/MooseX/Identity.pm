@@ -7,7 +7,7 @@ use strict;
 use Scalar::Util qw(looks_like_number blessed refaddr);
 use Moose::Util qw(does_role);
 use Carp qw(confess);
-use namespace::clean;
+use namespace::autoclean;
 
 use Sub::Exporter -setup => {
     exports => [qw(
@@ -27,12 +27,10 @@ sub is_identical {
             if ( my $b2 = blessed($v2) ) {
 
                 # just use ->can('is_identical') here?
-                if (does_role(
-                        $v1, 'MooseX::Identity::Role')) {
+                if ( does_role( $v1, 'MooseX::Identity::Role' ) ) {
                     return $v1->is_identical($v2);
                 }
-                elsif (does_role(
-                        $v2, 'MooseX::Identity::Role')) {
+                elsif ( does_role( $v2, 'MooseX::Identity::Role' ) ) {
 
                     # just return here because they are different classes?
                     return $v2->is_identical($v1);
@@ -101,7 +99,7 @@ The C<is_identical> function is to have the same meaning as C<===>.
 
 =item B<is_identical ($v1, $v2)>
 
-Returns true if the two argument represent the same value.
+Returns true if the two arguments represent the same value.
 This is not exported unless you specifically request it.
 
 =back
